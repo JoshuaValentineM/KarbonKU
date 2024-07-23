@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "624367082894",
+    "project_id": "karbonku-d7e7b",
+    "storage_bucket": "karbonku-d7e7b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:624367082894:android:ea31f990903dd6a14298df",
+        "android_client_info": {
+          "package_name": "com.example.karbonku"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDXnJknfzHN6BHIIi-5nUz2xv9xzM50Wwo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
