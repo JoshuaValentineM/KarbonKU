@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
@@ -14,7 +15,7 @@ class _AuthPageState extends State<AuthPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
-  Future<void> _signInWithGoogle() async {
+  Future<void> _signInWithGoogle(BuildContext context) async {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
@@ -34,17 +35,64 @@ class _AuthPageState extends State<AuthPage> {
       if (user != null) {
         // Successfully signed in
         print('Google Sign-In successful: ${user.displayName}');
+        // Navigate to HomePage
+        Navigator.pushReplacementNamed(context, '/home');
       }
     } catch (e) {
       print('Google Sign-In error: $e');
     }
   }
 
-  Future<void> _signInWithApple() async {
-    // TODO: Implement Apple sign-in
+  Future<void> _signInWithTwitter(BuildContext context) async {
+    try {
+      // Create a TwitterAuthProvider instance
+      final twitterProvider = TwitterAuthProvider();
+
+      // Attempt to sign in with Twitter
+      final UserCredential userCredential =
+          await _auth.signInWithProvider(twitterProvider);
+      final User? user = userCredential.user;
+
+      if (user != null) {
+        // Successfully signed in
+        print('Twitter Sign-In successful: ${user.displayName}');
+        // Navigate to HomePage
+        Navigator.pushReplacementNamed(context, '/home');
+      }
+    } on auth.FirebaseAuthException catch (e) {
+      // Handle FirebaseAuthException specifically
+      switch (e.code) {
+        case 'account-exists-with-different-credential':
+          print('The account already exists with a different credential.');
+          break;
+        case 'invalid-credential':
+          print('The credential is invalid.');
+          break;
+        case 'operation-not-allowed':
+          print('Operation not allowed. Please make sure you have enabled the provider.');
+          break;
+        case 'user-disabled':
+          print('The user account has been disabled.');
+          break;
+        case 'user-not-found':
+          print('No user found for the given credential.');
+          break;
+        case 'wrong-password':
+          print('The password is incorrect.');
+          break;
+        case 'credential-already-in-use':
+          print('The credential is already in use.');
+          break;
+        default:
+          print('An undefined Error happened: ${e.message}');
+      }
+    } catch (e) {
+      // Handle other types of errors (network issues, unexpected exceptions)
+      print('An unexpected error occurred: $e');
+    }
   }
 
-  Future<void> _signInWithFacebook() async {
+  Future<void> _signInWithFacebook(BuildContext context) async {
     try {
       final LoginResult result = await FacebookAuth.instance.login(
         permissions: ['email', 'public_profile'],
@@ -62,6 +110,8 @@ class _AuthPageState extends State<AuthPage> {
         if (user != null) {
           // Successfully signed in
           print('Facebook Sign-In successful: ${user.displayName}');
+          // Navigate to HomePage
+          Navigator.pushReplacementNamed(context, '/home');
         }
       } else {
         // Handle login error
@@ -71,7 +121,6 @@ class _AuthPageState extends State<AuthPage> {
       print('Facebook Sign-In error: $e');
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -127,19 +176,19 @@ class _AuthPageState extends State<AuthPage> {
                     ),
                     const SizedBox(height: 20),
                     _signInButton(
-                      onPressed: _signInWithGoogle,
+                      onPressed: () => _signInWithGoogle(context),
                       imagePath: 'assets/img/logo_google.png',
                       text: 'Lanjutkan dengan Google',
                     ),
                     const SizedBox(height: 10),
                     _signInButton(
-                      onPressed: _signInWithApple,
+                      onPressed: () => _signInWithTwitter(context),
                       imagePath: 'assets/img/logo_apple.png',
-                      text: 'Lanjutkan dengan Apple ID',
+                      text: 'Lanjutkan dengan X',
                     ),
                     const SizedBox(height: 10),
                     _signInButton(
-                      onPressed: _signInWithFacebook,
+                      onPressed: () => _signInWithFacebook(context),
                       imagePath: 'assets/img/logo_facebook.png',
                       text: 'Lanjutkan dengan Facebook',
                     ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'auth_page.dart';
+import 'home_page.dart'; // Import your HomePage file
 import 'firebase_options.dart';
 
 void main() async {
@@ -22,7 +23,11 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const AuthPage(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const AuthPage(),
+        '/home': (context) => const HomePage(), // Define the route for HomePage
+      },
     );
   }
 }
