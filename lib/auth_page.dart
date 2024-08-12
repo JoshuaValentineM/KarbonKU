@@ -183,7 +183,7 @@ class _AuthPageState extends State<AuthPage> {
                     const SizedBox(height: 10),
                     _signInButton(
                       onPressed: () => _signInWithTwitter(context),
-                      imagePath: 'assets/img/logo_apple.png',
+                      imagePath: 'assets/img/logo_x.png',
                       text: 'Lanjutkan dengan X',
                     ),
                     const SizedBox(height: 10),
