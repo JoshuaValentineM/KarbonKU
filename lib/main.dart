@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'auth_page.dart';
-import 'home_page.dart';
-import 'profile_page.dart';
+import 'view/auth_page.dart';
+import 'view/home_page.dart';
+import 'view/profile_page.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -31,6 +31,59 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
+        fontFamily: 'Poppins',
+        textTheme: const TextTheme(
+          headlineLarge: TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 32.0,
+            fontWeight: FontWeight.bold,
+          ),
+          headlineMedium: TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 28.0,
+            fontWeight: FontWeight.w500,
+          ),
+          headlineSmall: TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 24.0,
+          ),
+          titleLarge: TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 22.0,
+          ),
+          titleMedium: TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 20.0,
+          ),
+          titleSmall: TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 16.0,
+          ),
+          bodyLarge: TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 16.0,
+          ),
+          bodyMedium: TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 14.0,
+          ),
+          bodySmall: TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 12.0,
+          ),
+          labelLarge: TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 14.0,
+          ),
+          labelMedium: TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 12.0,
+          ),
+          labelSmall: TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 10.0,
+          ),
+        ),
       ),
       initialRoute: initialRoute,
       routes: {
