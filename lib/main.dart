@@ -89,7 +89,11 @@ class MyApp extends StatelessWidget {
       routes: {
         '/auth': (context) => const AuthPage(),
         '/home': (context) => const HomePage(),
-        '/profile': (context) => const ProfilePage(),
+        '/profile': (context) {
+          final User? user =
+              ModalRoute.of(context)?.settings.arguments as User?;
+          return ProfilePage(user: user!); // Ensure `user` is not null
+        },
       },
     );
   }

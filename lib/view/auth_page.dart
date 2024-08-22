@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
@@ -14,6 +15,7 @@ class AuthPage extends StatefulWidget {
 class _AuthPageState extends State<AuthPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Future<void> _signInWithGoogle(BuildContext context) async {
     try {
@@ -33,6 +35,15 @@ class _AuthPageState extends State<AuthPage> {
       final User? user = userCredential.user;
 
       if (user != null) {
+        // Save user data to Firestore
+        print('Google Sign-In successful, Data User: ${user.toString()}');
+        await _firestore.collection('users').doc(user.uid).set({
+          'uid': user.uid,
+          'name': user.displayName,
+          'email': user.email,
+          'photoUrl': user.photoURL,
+          'lastSignIn': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
         // Successfully signed in
         print('Google Sign-In successful: ${user.displayName}');
         // Navigate to HomePage
@@ -54,6 +65,14 @@ class _AuthPageState extends State<AuthPage> {
       final User? user = userCredential.user;
 
       if (user != null) {
+        // Save user data to Firestore
+        await _firestore.collection('users').doc(user.uid).set({
+          'uid': user.uid,
+          'name': user.displayName,
+          'email': user.email,
+          'photoUrl': user.photoURL,
+          'lastSignIn': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
         // Successfully signed in
         print('Twitter Sign-In successful: ${user.displayName}');
         // Navigate to HomePage
@@ -69,7 +88,8 @@ class _AuthPageState extends State<AuthPage> {
           print('The credential is invalid.');
           break;
         case 'operation-not-allowed':
-          print('Operation not allowed. Please make sure you have enabled the provider.');
+          print(
+              'Operation not allowed. Please make sure you have enabled the provider.');
           break;
         case 'user-disabled':
           print('The user account has been disabled.');
@@ -100,14 +120,22 @@ class _AuthPageState extends State<AuthPage> {
 
       if (result.status == LoginStatus.success) {
         final AccessToken accessToken = result.accessToken!;
-        final OAuthCredential facebookCredential = FacebookAuthProvider.credential(
-          accessToken.tokenString
-        );
+        final OAuthCredential facebookCredential =
+            FacebookAuthProvider.credential(accessToken.tokenString);
 
-        final UserCredential userCredential = await _auth.signInWithCredential(facebookCredential);
+        final UserCredential userCredential =
+            await _auth.signInWithCredential(facebookCredential);
         final User? user = userCredential.user;
 
         if (user != null) {
+          // Save user data to Firestore
+          await _firestore.collection('users').doc(user.uid).set({
+            'uid': user.uid,
+            'name': user.displayName,
+            'email': user.email,
+            'photoUrl': user.photoURL,
+            'lastSignIn': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
           // Successfully signed in
           print('Facebook Sign-In successful: ${user.displayName}');
           // Navigate to HomePage
@@ -146,7 +174,8 @@ class _AuthPageState extends State<AuthPage> {
             // Centered white box
             Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
                 margin: const EdgeInsets.symmetric(horizontal: 20),
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -208,7 +237,8 @@ class _AuthPageState extends State<AuthPage> {
     required String text,
   }) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 5), // Add vertical margin here
+      margin:
+          const EdgeInsets.symmetric(vertical: 5), // Add vertical margin here
       child: SizedBox(
         width: double.infinity,
         child: OutlinedButton(
