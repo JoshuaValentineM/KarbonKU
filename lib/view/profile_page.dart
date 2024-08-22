@@ -533,12 +533,12 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                     //     : null,
                   ),
                   Positioned(
-                    bottom: 5,
+                    bottom: 4,
                     right: 7,
                     child: Container(
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white, // Background color
+                        color: Color(0xFF66D6A6), // Background color
                         border: Border.all(
                           // Border definition
                           color:
@@ -547,8 +547,8 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                         ),
                       ),
                       child: const Icon(
-                        Icons.edit,
-                        color: Color(0xFF66D6A6), // Icon color using hex code
+                        Icons.camera_alt,
+                        color: Colors.white,
                         size: 20, // Icon size
                       ),
                     ),
