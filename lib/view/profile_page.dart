@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../middleware/auth_middleware.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../middleware/auth_middleware.dart';
+import 'add_vehicle_form.dart';
 import 'dart:io'; // For File
 import 'package:image_picker/image_picker.dart'; // For ImagePicker and XFile
 import 'package:firebase_storage/firebase_storage.dart';
@@ -38,12 +39,13 @@ class _ProfilePageState extends State<ProfilePage> {
           '';
       profilePicture =
           userData.data()?['profilePicture'] ?? widget.user?.photoURL ?? '';
-      location = userData.data()?['location'] ?? 'Location Undefined';
+      location = userData.data()?['location'] ?? '';
     });
   }
 
 // class ProfilePage extends StatelessWidget {
 //   const ProfilePage({super.key});
+  // Pastikan import ini benar
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +65,7 @@ class _ProfilePageState extends State<ProfilePage> {
         }
 
         var userDoc = snapshot.data;
-        String location = 'Location Undefined';
+        String location = '';
         String profilePicture = user?.photoURL ?? '';
         String displayName = user?.displayName ?? 'Guest';
 
@@ -71,7 +73,7 @@ class _ProfilePageState extends State<ProfilePage> {
         if (userDoc != null && userDoc.exists) {
           var data = userDoc.data() as Map<String, dynamic>?;
           if (data != null && data.containsKey('location')) {
-            location = data['location'] ?? 'Location Undefined';
+            location = data['location'] ?? '';
             profilePicture = data['profilePicture'] ?? user?.photoURL ?? '';
             displayName = data['customDisplayName'] ?? displayName;
           }
@@ -355,12 +357,12 @@ class _ProfilePageState extends State<ProfilePage> {
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
                 onPressed: () {
-                  print('Tambah button pressed');
+                  _showAddVehicleDialog();
                 },
                 child: const Text(
                   'Tambah',
                   style: TextStyle(
-                    color: Colors.white, // Text color
+                    color: Colors.white,
                   ),
                 ),
               ),
@@ -423,6 +425,33 @@ class _ProfilePageState extends State<ProfilePage> {
       }).toList(),
     );
   }
+
+void _showAddVehicleDialog() {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Tambah Kendaraan'),
+        content: AddVehicleForm(
+          onSubmit: (type, name, age, fuel) {
+            // Print the result to console
+            print('Jenis Kendaraan: $type');
+            print('Nama Kendaraan: $name');
+            print('Usia Kendaraan: $age');
+            print('Jenis Bahan Bakar: $fuel');
+
+            // Data sudah ditambahkan di AddVehicleForm, tidak perlu menambah lagi di sini
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Kendaraan berhasil ditambahkan')),
+            );
+            Navigator.of(context).pop(); // Close the dialog
+          },
+        ),
+      );
+    },
+  );
+}
 }
 
 class EditProfileDialog extends StatefulWidget {
@@ -457,7 +486,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
         var data = userDoc.data() as Map<String, dynamic>?;
         _nameController.text =
             data?['customDisplayName'] ?? widget.user?.displayName ?? '';
-        _locationController.text = data?['location'] ?? 'Location Undefined';
+        _locationController.text = data?['location'] ?? '';
         // Set initial profile picture URL
         setState(() {
           _profilePictureUrl = data?['profilePicture'] ??
