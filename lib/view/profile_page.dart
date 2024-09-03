@@ -374,84 +374,112 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildVehicleList(BuildContext context) {
-    final List<Map<String, String>> vehicles = [
-      {"name": "Motorcycle", "icon": "assets/img/motorcycle_icon.png"},
-      {"name": "Car", "icon": "assets/img/car_icon.png"},
-      {"name": "Motorcycle", "icon": "assets/img/motorcycle_icon.png"},
-      {"name": "Car", "icon": "assets/img/car_icon.png"},
-      {"name": "Motorcycle", "icon": "assets/img/motorcycle_icon.png"},
-      {"name": "Car", "icon": "assets/img/car_icon.png"},
-    ];
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+    final FirebaseAuth auth = FirebaseAuth.instance;
 
-    return Wrap(
-      spacing: 20,
-      runSpacing: 20,
-      children: vehicles.map((vehicle) {
-        return Column(
-          children: [
-            Container(
-              width: 70,
-              height: 70,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF1A373B),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    spreadRadius: 2,
-                    blurRadius: 6,
-                    offset: const Offset(0, 3),
+    return FutureBuilder<QuerySnapshot>(
+      future: firestore.collection('vehicles')
+          .where('userId', isEqualTo: auth.currentUser!.uid)
+          .get(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return const Center(child: Text('Error fetching vehicles'));
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text('No vehicles found'));
+        }
+
+        final List<Map<String, dynamic>> vehicles = snapshot.data!.docs.map((doc) {
+          String iconPath;
+          if (doc['vehicleType'] == 'motor') {
+            iconPath = 'assets/img/motorcycle_icon.png';
+          } else if (doc['vehicleType'] == 'mobil') {
+            iconPath = 'assets/img/car_icon.png';
+          } else {
+            iconPath = 'assets/img/default_icon.png'; // Default icon for other types
+          }
+
+          return {
+            "name": doc['vehicleName'],
+            "icon": iconPath,
+          };
+        }).toList();
+
+        return Wrap(
+          spacing: 20,
+          runSpacing: 20,
+          children: vehicles.map((vehicle) {
+            return Column(
+              children: [
+                Container(
+                  width: 70,
+                  height: 70,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF1A373B),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        spreadRadius: 2,
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: IconButton(
-                icon: Image.asset(
-                  vehicle["icon"]!,
-                  width: 35,
+                  child: IconButton(
+                    icon: Image.asset(
+                      vehicle["icon"]!,
+                      width: 35,
+                    ),
+                    iconSize: 40,
+                    onPressed: () {
+                      print('${vehicle["name"]} button pressed');
+                    },
+                  ),
                 ),
-                iconSize: 40,
-                onPressed: () {
-                  print('${vehicle["name"]} button pressed');
-                },
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              vehicle["name"]!,
-              style: const TextStyle(color: Colors.black),
-            ),
-          ],
+                const SizedBox(height: 8),
+                Text(
+                  vehicle["name"]!,
+                  style: const TextStyle(color: Colors.black),
+                ),
+              ],
+            );
+          }).toList(),
         );
-      }).toList(),
+      },
     );
   }
+  void _showAddVehicleDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Tambah Kendaraan'),
+          content: AddVehicleForm(
+            onSubmit: (type, name, age, fuel) {
+              // Print the result to console
+              print('Jenis Kendaraan: $type');
+              print('Nama Kendaraan: $name');
+              print('Usia Kendaraan: $age');
+              print('Jenis Bahan Bakar: $fuel');
 
-void _showAddVehicleDialog() {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text('Tambah Kendaraan'),
-        content: AddVehicleForm(
-          onSubmit: (type, name, age, fuel) {
-            // Print the result to console
-            print('Jenis Kendaraan: $type');
-            print('Nama Kendaraan: $name');
-            print('Usia Kendaraan: $age');
-            print('Jenis Bahan Bakar: $fuel');
+              // Data sudah ditambahkan di AddVehicleForm, tidak perlu menambah lagi di sini
 
-            // Data sudah ditambahkan di AddVehicleForm, tidak perlu menambah lagi di sini
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Kendaraan berhasil ditambahkan')),
-            );
-            Navigator.of(context).pop(); // Close the dialog
-          },
-        ),
-      );
-    },
-  );
-}
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Kendaraan berhasil ditambahkan')),
+              );
+              Navigator.of(context).pop(); // Close the dialog
+            },
+          ),
+        );
+      },
+    );
+  }
 }
 
 class EditProfileDialog extends StatefulWidget {
