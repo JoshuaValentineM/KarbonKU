@@ -3,8 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../middleware/auth_middleware.dart';
 import 'add_vehicle_form.dart';
-import 'dart:io'; // For File
-import 'package:image_picker/image_picker.dart'; // For ImagePicker and XFile
+import 'view_vehicle_detail.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -374,84 +375,165 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildVehicleList(BuildContext context) {
-    final List<Map<String, String>> vehicles = [
-      {"name": "Motorcycle", "icon": "assets/img/motorcycle_icon.png"},
-      {"name": "Car", "icon": "assets/img/car_icon.png"},
-      {"name": "Motorcycle", "icon": "assets/img/motorcycle_icon.png"},
-      {"name": "Car", "icon": "assets/img/car_icon.png"},
-      {"name": "Motorcycle", "icon": "assets/img/motorcycle_icon.png"},
-      {"name": "Car", "icon": "assets/img/car_icon.png"},
-    ];
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+    final FirebaseAuth auth = FirebaseAuth.instance;
 
-    return Wrap(
-      spacing: 20,
-      runSpacing: 20,
-      children: vehicles.map((vehicle) {
-        return Column(
-          children: [
-            Container(
-              width: 70,
-              height: 70,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF1A373B),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    spreadRadius: 2,
-                    blurRadius: 6,
-                    offset: const Offset(0, 3),
+    return FutureBuilder<QuerySnapshot>(
+      future: firestore.collection('vehicles')
+          .where('userId', isEqualTo: auth.currentUser!.uid)
+          .get(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return const Center(child: Text('Error fetching vehicles'));
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text('No vehicles found'));
+        }
+
+        final List<Map<String, dynamic>> vehicles = snapshot.data!.docs.map((doc) {
+          String iconPath;
+          if (doc['vehicleType'] == 'motor') {
+            iconPath = 'assets/img/motorcycle_icon.png';
+          } else {
+            iconPath = 'assets/img/car_icon.png';
+          }
+
+          return {
+            "id": doc.id,
+            "name": doc['vehicleName'],
+            "icon": iconPath,
+          };
+        }).toList();
+
+        return Wrap(
+          spacing: 20,
+          runSpacing: 20,
+          children: vehicles.map((vehicle) {
+            return Column(
+              children: [
+                Container(
+                  width: 70,
+                  height: 70,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF1A373B),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        spreadRadius: 2,
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: IconButton(
-                icon: Image.asset(
-                  vehicle["icon"]!,
-                  width: 35,
+                  child: IconButton(
+                    icon: Image.asset(
+                      vehicle["icon"]!,
+                      width: 35,
+                    ),
+                    iconSize: 40,
+                    onPressed: () async {
+                      DocumentSnapshot vehicleDoc = await firestore.collection('vehicles').doc(vehicle["id"]).get();
+
+                      if (vehicleDoc.exists) {
+                        _showVehicleDetailDialog(
+                          context,
+                          vehicleDoc['vehicleType'],
+                          vehicleDoc['vehicleName'],
+                          vehicleDoc['vehicleAge'],
+                          vehicleDoc['fuelType'],
+                        );
+                      } else {
+                        print('Vehicle not found');
+                      }
+                    },
+
+                  ),
                 ),
-                iconSize: 40,
-                onPressed: () {
-                  print('${vehicle["name"]} button pressed');
-                },
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              vehicle["name"]!,
-              style: const TextStyle(color: Colors.black),
-            ),
-          ],
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: 70,  // Fixed width for the text container
+                  child: Text(
+                    vehicle["name"]!,
+                    style: const TextStyle(color: Colors.black),
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,  // Ellipsis if the text overflows
+                    maxLines: 1,  // Ensure it's a single line
+                  ),
+                ),
+              ],
+            );
+          }).toList(),
         );
-      }).toList(),
+      },
     );
   }
 
-void _showAddVehicleDialog() {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text('Tambah Kendaraan'),
-        content: AddVehicleForm(
-          onSubmit: (type, name, age, fuel) {
-            // Print the result to console
-            print('Jenis Kendaraan: $type');
-            print('Nama Kendaraan: $name');
-            print('Usia Kendaraan: $age');
-            print('Jenis Bahan Bakar: $fuel');
+  void _showAddVehicleDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            'Tambah Kendaraan',
+            style: TextStyle(fontSize: 20),
+          ),
+          content: AddVehicleForm(
+            onSubmit: (type, name, age, fuel) {
+              // Print the result to console
+              print('Jenis Kendaraan: $type');
+              print('Nama Kendaraan: $name');
+              print('Usia Kendaraan: $age');
+              print('Jenis Bahan Bakar: $fuel');
 
-            // Data sudah ditambahkan di AddVehicleForm, tidak perlu menambah lagi di sini
+              // Data sudah ditambahkan di AddVehicleForm, tidak perlu menambah lagi di sini
 
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Kendaraan berhasil ditambahkan')),
-            );
-            Navigator.of(context).pop(); // Close the dialog
-          },
-        ),
-      );
-    },
-  );
-}
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Kendaraan berhasil ditambahkan')),
+              );
+              Navigator.of(context).pop(); // Close the dialog
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  void _showVehicleDetailDialog(BuildContext context, String vehicleType, String vehicleName, int vehicleAge, String fuelType) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Informasi Kendaraan',
+                style: TextStyle(fontSize: 20),
+              ),
+              IconButton(
+                icon: const Icon(Icons.edit_outlined, color: Color(0xFF1A373B)),
+                onPressed: () {
+                  print('Edit icon pressed');
+                },
+              ),
+            ],
+          ),
+          content: ViewVehicleDetailForm(
+            vehicleType: vehicleType,
+            vehicleName: vehicleName,
+            vehicleAge: vehicleAge,
+            fuelType: fuelType,
+          ),
+        );
+      },
+    );
+  }
 }
 
 class EditProfileDialog extends StatefulWidget {
