@@ -84,6 +84,10 @@ class MyApp extends StatelessWidget {
             fontSize: 10.0,
           ),
         ),
+        dialogTheme: const DialogTheme(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
+        ),
       ),
       initialRoute: initialRoute,
       routes: {

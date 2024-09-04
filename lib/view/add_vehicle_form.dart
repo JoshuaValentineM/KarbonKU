@@ -71,11 +71,11 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
                   padding: const EdgeInsets.only(right: 30.0), // Jarak antara label dan gambar
                   child: RichText(
                     textAlign: TextAlign.start,
-                    text: TextSpan(
+                    text: const TextSpan(
                       text: 'Jenis Kendaraan',
-                      style: const TextStyle(fontFamily: 'Poppins', color: Colors.black),
+                      style: TextStyle(fontFamily: 'Poppins', color: Colors.black),
                       children: <TextSpan>[
-                        const TextSpan(
+                        TextSpan(
                           text: ' *',
                           style: TextStyle(color: Colors.red),
                         ),
@@ -183,9 +183,9 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
                         _vehicleAge = value;
                       });
                     },
-                    activeColor: Color(0xFF1A373B), // Warna slider saat aktif
-                    inactiveColor: Color(0xFF1A373B), // Warna slider saat tidak aktif
-                    thumbColor: Color(0xFF1A373B), // Warna thumb slider
+                    activeColor: const Color(0xFF1A373B), // Warna slider saat aktif
+                    inactiveColor: const Color(0xFF1A373B), // Warna slider saat tidak aktif
+                    thumbColor: const Color(0xFF1A373B), // Warna thumb slider
                   ),
                 ),
                 const SizedBox(width: 14),

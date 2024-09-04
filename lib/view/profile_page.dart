@@ -3,8 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../middleware/auth_middleware.dart';
 import 'add_vehicle_form.dart';
-import 'dart:io'; // For File
-import 'package:image_picker/image_picker.dart'; // For ImagePicker and XFile
+import 'view_vehicle_detail.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -398,13 +399,12 @@ class _ProfilePageState extends State<ProfilePage> {
           String iconPath;
           if (doc['vehicleType'] == 'motor') {
             iconPath = 'assets/img/motorcycle_icon.png';
-          } else if (doc['vehicleType'] == 'mobil') {
-            iconPath = 'assets/img/car_icon.png';
           } else {
-            iconPath = 'assets/img/default_icon.png'; // Default icon for other types
+            iconPath = 'assets/img/car_icon.png';
           }
 
           return {
+            "id": doc.id,
             "name": doc['vehicleName'],
             "icon": iconPath,
           };
@@ -437,15 +437,34 @@ class _ProfilePageState extends State<ProfilePage> {
                       width: 35,
                     ),
                     iconSize: 40,
-                    onPressed: () {
-                      print('${vehicle["name"]} button pressed');
+                    onPressed: () async {
+                      DocumentSnapshot vehicleDoc = await firestore.collection('vehicles').doc(vehicle["id"]).get();
+
+                      if (vehicleDoc.exists) {
+                        _showVehicleDetailDialog(
+                          context,
+                          vehicleDoc['vehicleType'],
+                          vehicleDoc['vehicleName'],
+                          vehicleDoc['vehicleAge'],
+                          vehicleDoc['fuelType'],
+                        );
+                      } else {
+                        print('Vehicle not found');
+                      }
                     },
+
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  vehicle["name"]!,
-                  style: const TextStyle(color: Colors.black),
+                SizedBox(
+                  width: 70,  // Fixed width for the text container
+                  child: Text(
+                    vehicle["name"]!,
+                    style: const TextStyle(color: Colors.black),
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,  // Ellipsis if the text overflows
+                    maxLines: 1,  // Ensure it's a single line
+                  ),
                 ),
               ],
             );
@@ -454,12 +473,16 @@ class _ProfilePageState extends State<ProfilePage> {
       },
     );
   }
+
   void _showAddVehicleDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Tambah Kendaraan'),
+          title: const Text(
+            'Tambah Kendaraan',
+            style: TextStyle(fontSize: 20),
+          ),
           content: AddVehicleForm(
             onSubmit: (type, name, age, fuel) {
               // Print the result to console
@@ -475,6 +498,37 @@ class _ProfilePageState extends State<ProfilePage> {
               );
               Navigator.of(context).pop(); // Close the dialog
             },
+          ),
+        );
+      },
+    );
+  }
+
+  void _showVehicleDetailDialog(BuildContext context, String vehicleType, String vehicleName, int vehicleAge, String fuelType) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Informasi Kendaraan',
+                style: TextStyle(fontSize: 20),
+              ),
+              IconButton(
+                icon: const Icon(Icons.edit_outlined, color: Color(0xFF1A373B)),
+                onPressed: () {
+                  print('Edit icon pressed');
+                },
+              ),
+            ],
+          ),
+          content: ViewVehicleDetailForm(
+            vehicleType: vehicleType,
+            vehicleName: vehicleName,
+            vehicleAge: vehicleAge,
+            fuelType: fuelType,
           ),
         );
       },
