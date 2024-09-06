@@ -379,7 +379,8 @@ class _ProfilePageState extends State<ProfilePage> {
     final FirebaseAuth auth = FirebaseAuth.instance;
 
     return FutureBuilder<QuerySnapshot>(
-      future: firestore.collection('vehicles')
+      future: firestore
+          .collection('vehicles')
           .where('userId', isEqualTo: auth.currentUser!.uid)
           .get(),
       builder: (context, snapshot) {
@@ -395,7 +396,8 @@ class _ProfilePageState extends State<ProfilePage> {
           return const Center(child: Text('No vehicles found'));
         }
 
-        final List<Map<String, dynamic>> vehicles = snapshot.data!.docs.map((doc) {
+        final List<Map<String, dynamic>> vehicles =
+            snapshot.data!.docs.map((doc) {
           String iconPath;
           if (doc['vehicleType'] == 'motor') {
             iconPath = 'assets/img/motorcycle_icon.png';
@@ -438,7 +440,10 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     iconSize: 40,
                     onPressed: () async {
-                      DocumentSnapshot vehicleDoc = await firestore.collection('vehicles').doc(vehicle["id"]).get();
+                      DocumentSnapshot vehicleDoc = await firestore
+                          .collection('vehicles')
+                          .doc(vehicle["id"])
+                          .get();
 
                       if (vehicleDoc.exists) {
                         _showVehicleDetailDialog(
@@ -452,18 +457,18 @@ class _ProfilePageState extends State<ProfilePage> {
                         print('Vehicle not found');
                       }
                     },
-
                   ),
                 ),
                 const SizedBox(height: 8),
                 SizedBox(
-                  width: 70,  // Fixed width for the text container
+                  width: 70, // Fixed width for the text container
                   child: Text(
                     vehicle["name"]!,
                     style: const TextStyle(color: Colors.black),
                     textAlign: TextAlign.center,
-                    overflow: TextOverflow.ellipsis,  // Ellipsis if the text overflows
-                    maxLines: 1,  // Ensure it's a single line
+                    overflow:
+                        TextOverflow.ellipsis, // Ellipsis if the text overflows
+                    maxLines: 1, // Ensure it's a single line
                   ),
                 ),
               ],
@@ -484,12 +489,13 @@ class _ProfilePageState extends State<ProfilePage> {
             style: TextStyle(fontSize: 20),
           ),
           content: AddVehicleForm(
-            onSubmit: (type, name, age, fuel) {
+            onSubmit: (type, name, age, fuel, picture) {
               // Print the result to console
               print('Jenis Kendaraan: $type');
               print('Nama Kendaraan: $name');
               print('Usia Kendaraan: $age');
               print('Jenis Bahan Bakar: $fuel');
+              print('Foto Sertifikat : $picture');
 
               // Data sudah ditambahkan di AddVehicleForm, tidak perlu menambah lagi di sini
 
@@ -504,7 +510,8 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  void _showVehicleDetailDialog(BuildContext context, String vehicleType, String vehicleName, int vehicleAge, String fuelType) {
+  void _showVehicleDetailDialog(BuildContext context, String vehicleType,
+      String vehicleName, int vehicleAge, String fuelType) {
     showDialog(
       context: context,
       builder: (BuildContext context) {

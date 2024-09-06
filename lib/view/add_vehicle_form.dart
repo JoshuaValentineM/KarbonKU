@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart'; // Import Firebase Storage
+import 'dart:io';
 
 class AddVehicleForm extends StatefulWidget {
-  final void Function(String, String, int, String?) onSubmit;
+  final void Function(String, String, int, String?, File?) onSubmit;
 
   const AddVehicleForm({Key? key, required this.onSubmit}) : super(key: key);
 
@@ -17,23 +20,60 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
   String? _selectedVehicleType;
   String? _fuelType;
   double _vehicleAge = 1; // Initialize with default value
+  File? _emissionCertificateImage;
 
-  void _submitForm() {
+  final ImagePicker _picker = ImagePicker();
+
+  // Method to pick image from gallery
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _emissionCertificateImage = File(pickedFile.path);
+      });
+    }
+  }
+
+  // Method to upload image to Firebase Storage and return the download URL
+  Future<String?> _uploadImageToStorage(File image) async {
+    try {
+      final storageRef = FirebaseStorage.instance.ref().child(
+          'emission_certificates/${DateTime.now().millisecondsSinceEpoch}.png');
+      final uploadTask = storageRef.putFile(image);
+      final snapshot = await uploadTask;
+      final downloadUrl = await snapshot.ref.getDownloadURL();
+      return downloadUrl;
+    } catch (e) {
+      print('Failed to upload image: $e');
+      return null;
+    }
+  }
+
+  void _submitForm() async {
     if (_formKey.currentState?.validate() ?? false) {
       final vehicleType = _selectedVehicleType ?? '';
       final vehicleName = _vehicleNameController.text;
       final vehicleAge = _vehicleAge.toInt(); // Convert to int
 
-      // Menambahkan data ke Firestore
+      String? imageUrl;
+
+      // Upload the image if the user has selected one
+      if (_emissionCertificateImage != null) {
+        imageUrl = await _uploadImageToStorage(_emissionCertificateImage!);
+      }
+
+      // Add data to Firestore
       FirebaseFirestore.instance.collection('vehicles').add({
         'vehicleType': vehicleType,
         'vehicleName': vehicleName,
         'vehicleAge': vehicleAge,
         'fuelType': _fuelType,
-        'userId': FirebaseAuth.instance.currentUser?.uid
+        'userId': FirebaseAuth.instance.currentUser?.uid,
+        'emissionCertificateUrl': imageUrl // Save the image URL if uploaded
       }).then((_) {
         print('Vehicle added successfully');
-        widget.onSubmit(vehicleType, vehicleName, vehicleAge, _fuelType);
+        widget.onSubmit(vehicleType, vehicleName, vehicleAge, _fuelType,
+            _emissionCertificateImage);
 
         final user = FirebaseAuth.instance.currentUser;
         Navigator.pushReplacementNamed(
@@ -59,21 +99,23 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
       key: _formKey,
       child: SizedBox(
         width: 370,
-        height: 400,
+        height: 600,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Row untuk label dan gambar
+            // Row for label and image
             Row(
               children: [
                 // Label
                 Padding(
-                  padding: const EdgeInsets.only(right: 30.0), // Jarak antara label dan gambar
+                  padding: const EdgeInsets.only(
+                      right: 30.0), // Spacing between label and image
                   child: RichText(
                     textAlign: TextAlign.start,
                     text: const TextSpan(
                       text: 'Jenis Kendaraan',
-                      style: TextStyle(fontFamily: 'Poppins', color: Colors.black),
+                      style:
+                          TextStyle(fontFamily: 'Poppins', color: Colors.black),
                       children: <TextSpan>[
                         TextSpan(
                           text: ' *',
@@ -83,9 +125,9 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
                     ),
                   ),
                 ),
-                // Gambar
+                // Images for vehicle type
                 Wrap(
-                  spacing: 12.0, // Jarak antara gambar 1 dan 2
+                  spacing: 12.0, // Spacing between images
                   children: [
                     GestureDetector(
                       onTap: () => _selectVehicle('motor'),
@@ -112,7 +154,7 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
               ],
             ),
             const SizedBox(height: 14),
-            // Label di luar box untuk Nama Kendaraan
+            // Vehicle name input field
             Align(
               alignment: Alignment.centerLeft,
               child: RichText(
@@ -129,7 +171,6 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
               ),
             ),
             const SizedBox(height: 14),
-            // TextFormField untuk Nama Kendaraan dengan border box
             TextFormField(
               controller: _vehicleNameController,
               decoration: InputDecoration(
@@ -139,10 +180,11 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.0),
                   borderSide: const BorderSide(
-                    color: Colors.blue, // Warna border saat di-focus
+                    color: Colors.blue,
                   ),
                 ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0), // Atur padding
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -152,6 +194,7 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
               },
             ),
             const SizedBox(height: 14),
+            // Vehicle age slider
             Align(
               alignment: Alignment.centerLeft,
               child: RichText(
@@ -183,9 +226,9 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
                         _vehicleAge = value;
                       });
                     },
-                    activeColor: const Color(0xFF1A373B), // Warna slider saat aktif
-                    inactiveColor: const Color(0xFF1A373B), // Warna slider saat tidak aktif
-                    thumbColor: const Color(0xFF1A373B), // Warna thumb slider
+                    activeColor: const Color(0xFF1A373B),
+                    inactiveColor: const Color(0xFF1A373B),
+                    thumbColor: const Color(0xFF1A373B),
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -205,7 +248,7 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
               ],
             ),
             const SizedBox(height: 14),
-            // Label dan DropdownField dalam satu Row
+            // Fuel type dropdown
             Row(
               children: [
                 Expanded(
@@ -213,7 +256,8 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
                   child: RichText(
                     text: const TextSpan(
                       text: 'Bahan Bakar',
-                      style: TextStyle(fontFamily: 'Poppins', color: Colors.black),
+                      style:
+                          TextStyle(fontFamily: 'Poppins', color: Colors.black),
                       children: <TextSpan>[
                         TextSpan(
                           text: ' *',
@@ -257,29 +301,62 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
                           color: Colors.blue,
                         ),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0), // Atur padding
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 8.0, horizontal: 12.0),
                     ),
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 14),
+            // Emission certificate image picker
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: RichText(
+                    text: const TextSpan(
+                      text: 'Sertifikat Hasil Uji Emisi (Optional)',
+                      style:
+                          TextStyle(fontFamily: 'Poppins', color: Colors.black),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton(
+                    onPressed: _pickImage,
+                    child: const Text('Pilih Gambar'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            // Display selected image if available
+            if (_emissionCertificateImage != null)
+              Image.file(
+                _emissionCertificateImage!,
+                width: 100,
+                height: 100,
+                fit: BoxFit.cover,
+              ),
             const SizedBox(height: 35),
-            // Button Tambahkan
+            // Submit button
             SizedBox(
-              width: double.infinity, // Match the width of the text fields
+              width: double.infinity,
               child: ElevatedButton(
                 onPressed: _submitForm,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF66D6A6), // Set the background color
-                  padding: const EdgeInsets.symmetric(vertical: 12.0), // Adjust padding
+                  backgroundColor: const Color(0xFF66D6A6),
+                  padding: const EdgeInsets.symmetric(vertical: 12.0),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0), // Border radius
+                    borderRadius: BorderRadius.circular(8.0),
                   ),
                 ),
                 child: const Text(
                   'Tambah',
                   style: TextStyle(
-                    color: Colors.white, // Set the text color
+                    color: Colors.white,
                   ),
                 ),
               ),
