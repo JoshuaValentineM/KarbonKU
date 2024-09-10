@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../middleware/auth_middleware.dart';
-import 'profile_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -46,6 +45,14 @@ class HomePage extends StatelessWidget {
             ElevatedButton(
               onPressed: () => _signOut(context),
               child: const Text('Logout'),
+            ),
+            const SizedBox(height: 20),
+            // Tambahkan button untuk EducationPage
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/education');
+              },
+              child: const Text('Go to Education Page'),
             ),
           ],
         ),
