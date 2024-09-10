@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ViewVehicleDetailForm extends StatelessWidget {
   final String vehicleType;
   final String vehicleName;
   final int vehicleAge;
   final String fuelType;
+  final String vehicleId;
 
   const ViewVehicleDetailForm({
     Key? key,
@@ -12,13 +14,19 @@ class ViewVehicleDetailForm extends StatelessWidget {
     required this.vehicleName,
     required this.vehicleAge,
     required this.fuelType,
+    required this.vehicleId,
   }) : super(key: key);
+
+  Future<String?> fetchEmissionCertificateUrl() async {
+    final docSnapshot = await FirebaseFirestore.instance.collection('vehicles').doc(vehicleId).get();
+    return docSnapshot.data()?['emissionCertificateUrl'] as String?;
+  }
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: 370,
-      height: 400,
+      height: 500,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -34,14 +42,17 @@ class ViewVehicleDetailForm extends StatelessWidget {
               Wrap(
                 spacing: 12.0,
                 children: [
-                  vehicleType == 'motor' 
-                  ? Image.asset(
-                    'assets/img/MotorbikeIconFill.png',
+                  Image.asset(
+                    vehicleType == 'motor'
+                        ? 'assets/img/MotorbikeIconFillSelected.png'
+                        : 'assets/img/MotorbikeIconFill.png',
                     width: 46,
                     height: 46,
-                  )
-                  : Image.asset(
-                    'assets/img/CarIconFill.png',
+                  ),
+                  Image.asset(
+                    vehicleType == 'mobil'
+                        ? 'assets/img/CarIconFillSelected.png'
+                        : 'assets/img/CarIconFill.png',
                     width: 46,
                     height: 46,
                   ),
@@ -66,7 +77,7 @@ class ViewVehicleDetailForm extends StatelessWidget {
               ),
               contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
             ),
-            readOnly: true, // Set the TextFormField to be non-editable
+            readOnly: true,
           ),
           const SizedBox(height: 14),
           const Align(
@@ -87,7 +98,7 @@ class ViewVehicleDetailForm extends StatelessWidget {
                   max: 20,
                   divisions: 19,
                   label: vehicleAge.toString(),
-                  onChanged: null, // Disable slider interaction
+                  onChanged: null,
                   activeColor: const Color(0xFF1A373B),
                   inactiveColor: const Color(0xFF1A373B),
                   thumbColor: const Color(0xFF1A373B),
@@ -132,13 +143,53 @@ class ViewVehicleDetailForm extends StatelessWidget {
                       ),
                     );
                   }).toList(),
-                  onChanged: null, // Disable dropdown interaction
+                  onChanged: null,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.0),
                     ),
                     contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
                   ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              const Expanded(
+                flex: 2,
+                child: Text(
+                  'Hasil Uji Emisi',
+                  style: TextStyle(fontFamily: 'Poppins', color: Colors.black),
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: FutureBuilder<String?>(
+                  future: fetchEmissionCertificateUrl(),
+                  builder: (BuildContext context, AsyncSnapshot<String?> snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const CircularProgressIndicator();
+                    } else if (snapshot.hasError) {
+                      return const Text('Error loading image');
+                    } else if (snapshot.hasData && snapshot.data != null) {
+                      return ClipRRect(
+                        borderRadius: BorderRadius.circular(8.0),
+                        child: Image.network(
+                          snapshot.data!,
+                          width: 100,
+                          height: 150,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Text('Failed to load image');
+                          },
+                        ),
+                      );
+                    } else {
+                      return const Text('No emission certificate');
+                    }
+                  },
                 ),
               ),
             ],

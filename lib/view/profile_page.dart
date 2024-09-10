@@ -44,9 +44,15 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
-// class ProfilePage extends StatelessWidget {
-//   const ProfilePage({super.key});
-  // Pastikan import ini benar
+  void _signOut(BuildContext context) async {
+    try {
+      await FirebaseAuth.instance.signOut();
+      Navigator.popUntil(context, ModalRoute.withName('/home')); // Pop until root route
+      Navigator.pushReplacementNamed(context, '/auth'); // Push the auth route
+    } catch (e) {
+      print('Error logging out: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,8 +60,7 @@ class _ProfilePageState extends State<ProfilePage> {
     User? user = FirebaseAuth.instance.currentUser;
 
     return FutureBuilder<DocumentSnapshot>(
-      future:
-          FirebaseFirestore.instance.collection('users').doc(user?.uid).get(),
+      future: FirebaseFirestore.instance.collection('users').doc(user?.uid).get(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -70,7 +75,6 @@ class _ProfilePageState extends State<ProfilePage> {
         String profilePicture = user?.photoURL ?? '';
         String displayName = user?.displayName ?? 'Guest';
 
-        // Safely check if the document exists and if the 'location' field is present
         if (userDoc != null && userDoc.exists) {
           var data = userDoc.data() as Map<String, dynamic>?;
           if (data != null && data.containsKey('location')) {
@@ -116,18 +120,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 50, vertical: 12),
                         ),
-                        onPressed: () async {
-                          try {
-                            await FirebaseAuth.instance.signOut();
-                            Navigator.pushNamedAndRemoveUntil(
-                              context,
-                              '/auth',
-                              (Route<dynamic> route) => false,
-                            );
-                          } catch (e) {
-                            print('Error logging out: $e');
-                          }
-                        },
+                        onPressed: () => _signOut(context),
                         child: const Text(
                           'Keluar',
                           style: TextStyle(
@@ -406,7 +399,7 @@ class _ProfilePageState extends State<ProfilePage> {
           }
 
           return {
-            "id": doc.id,
+            "id": doc.id, // Include vehicle ID
             "name": doc['vehicleName'],
             "icon": iconPath,
           };
@@ -448,6 +441,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       if (vehicleDoc.exists) {
                         _showVehicleDetailDialog(
                           context,
+                          vehicle["id"],
                           vehicleDoc['vehicleType'],
                           vehicleDoc['vehicleName'],
                           vehicleDoc['vehicleAge'],
@@ -461,14 +455,13 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 const SizedBox(height: 8),
                 SizedBox(
-                  width: 70, // Fixed width for the text container
+                  width: 70,
                   child: Text(
                     vehicle["name"]!,
                     style: const TextStyle(color: Colors.black),
                     textAlign: TextAlign.center,
-                    overflow:
-                        TextOverflow.ellipsis, // Ellipsis if the text overflows
-                    maxLines: 1, // Ensure it's a single line
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                 ),
               ],
@@ -510,7 +503,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  void _showVehicleDetailDialog(BuildContext context, String vehicleType,
+  void _showVehicleDetailDialog(BuildContext context, String vehicleId, String vehicleType,
       String vehicleName, int vehicleAge, String fuelType) {
     showDialog(
       context: context,
@@ -532,6 +525,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ],
           ),
           content: ViewVehicleDetailForm(
+            vehicleId: vehicleId,
             vehicleType: vehicleType,
             vehicleName: vehicleName,
             vehicleAge: vehicleAge,
