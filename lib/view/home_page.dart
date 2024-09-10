@@ -9,7 +9,11 @@ class HomePage extends StatelessWidget {
   Future<void> _signOut(BuildContext context) async {
     try {
       await FirebaseAuth.instance.signOut();
-      Navigator.pushReplacementNamed(context, '/auth');
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/auth',
+        (Route<dynamic> route) => false,
+      );
     } catch (e) {
       print('Sign-Out error: $e');
     }
