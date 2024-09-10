@@ -41,6 +41,7 @@ dependencies:
   flutter_facebook_auth: ^7.0.1
   image_picker: ^0.8.5+3
   firebase_storage: ^12.1.1
+  url_launcher: ^6.1.7
 
 dev_dependencies:
   flutter_test:
@@ -70,6 +71,7 @@ flutter:
     - assets/img/MotorbikeIconFillSelected.png
     - assets/img/CarIconFill.png
     - assets/img/CarIconFillSelected.png
+    - assets/img/placeholder.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

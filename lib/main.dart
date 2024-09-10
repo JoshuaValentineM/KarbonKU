@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'view/auth_page.dart';
 import 'view/home_page.dart';
 import 'view/profile_page.dart';
+import 'view/education_page.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -98,6 +99,7 @@ class MyApp extends StatelessWidget {
               ModalRoute.of(context)?.settings.arguments as User?;
           return ProfilePage(user: user!); // Ensure `user` is not null
         },
+        '/education': (context) => EducationPage(),
       },
     );
   }
