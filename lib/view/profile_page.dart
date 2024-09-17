@@ -7,6 +7,7 @@ import 'view_vehicle_detail.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'edit_profile.dart';
 
 class ProfilePage extends StatefulWidget {
   final User user;
@@ -47,7 +48,8 @@ class _ProfilePageState extends State<ProfilePage> {
   void _signOut(BuildContext context) async {
     try {
       await FirebaseAuth.instance.signOut();
-      Navigator.popUntil(context, ModalRoute.withName('/home')); // Pop until root route
+      Navigator.popUntil(
+          context, ModalRoute.withName('/home')); // Pop until root route
       Navigator.pushReplacementNamed(context, '/auth'); // Push the auth route
     } catch (e) {
       print('Error logging out: $e');
@@ -60,7 +62,8 @@ class _ProfilePageState extends State<ProfilePage> {
     User? user = FirebaseAuth.instance.currentUser;
 
     return FutureBuilder<DocumentSnapshot>(
-      future: FirebaseFirestore.instance.collection('users').doc(user?.uid).get(),
+      future:
+          FirebaseFirestore.instance.collection('users').doc(user?.uid).get(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -503,8 +506,8 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  void _showVehicleDetailDialog(BuildContext context, String vehicleId, String vehicleType,
-      String vehicleName, int vehicleAge, String fuelType) {
+  void _showVehicleDetailDialog(BuildContext context, String vehicleId,
+      String vehicleType, String vehicleName, int vehicleAge, String fuelType) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -533,189 +536,6 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         );
       },
-    );
-  }
-}
-
-class EditProfileDialog extends StatefulWidget {
-  final User? user;
-
-  const EditProfileDialog({Key? key, required this.user}) : super(key: key);
-
-  @override
-  _EditProfileDialogState createState() => _EditProfileDialogState();
-}
-
-class _EditProfileDialogState extends State<EditProfileDialog> {
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _locationController = TextEditingController();
-  File? _imageFile;
-  final ImagePicker _picker = ImagePicker();
-  String _profilePictureUrl = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _getUserProfile();
-  }
-
-  Future<void> _getUserProfile() async {
-    if (widget.user != null) {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.user!.uid)
-          .get();
-      if (userDoc.exists) {
-        var data = userDoc.data() as Map<String, dynamic>?;
-        _nameController.text =
-            data?['customDisplayName'] ?? widget.user?.displayName ?? '';
-        _locationController.text = data?['location'] ?? '';
-        // Set initial profile picture URL
-        setState(() {
-          _profilePictureUrl = data?['profilePicture'] ??
-              widget.user?.photoURL ??
-              'default_profile_picture_url';
-          _imageFile = null; // If needed, set initial image
-        });
-      }
-    }
-  }
-
-  Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _imageFile = File(pickedFile.path);
-      });
-    }
-  }
-
-  Future<void> _updateProfile() async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      final userDocRef =
-          FirebaseFirestore.instance.collection('users').doc(user?.uid);
-
-      if (_imageFile != null) {
-        // Upload image to Firebase Storage
-        final storageRef = FirebaseStorage.instance
-            .ref()
-            .child('profile_pictures/${user?.uid}.jpg');
-        await storageRef.putFile(_imageFile!);
-        final imageUrl = await storageRef.getDownloadURL();
-
-        // Update Firestore with new profile picture URL and custom display name
-        await userDocRef.update({
-          'profilePicture': imageUrl,
-          'customDisplayName': _nameController.text,
-          'location': _locationController.text,
-        });
-      } else {
-        // Update Firestore without changing profile picture
-        await userDocRef.update({
-          'customDisplayName': _nameController.text,
-          'location': _locationController.text,
-        });
-      }
-
-      Navigator.pop(context, true);
-    } catch (e) {
-      print('Error updating profile: $e');
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Ubah Profil'),
-      content: SingleChildScrollView(
-        child: Column(
-          children: [
-            GestureDetector(
-              onTap: _pickImage,
-              child: Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundImage: _imageFile != null
-                        ? FileImage(_imageFile!) as ImageProvider
-                        : NetworkImage(_profilePictureUrl) as ImageProvider,
-                    // child: _imageFile == null
-                    //     ? const Icon(Icons.camera_alt, color: Colors.white)
-                    //     : null,
-                  ),
-                  Positioned(
-                    bottom: 4,
-                    right: 7,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Color(0xFF66D6A6), // Background color
-                        border: Border.all(
-                          // Border definition
-                          color:
-                              Color(0xFF66D6A6), // Border color using hex code
-                          width: 2.0, // Border width
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.camera_alt,
-                        color: Colors.white,
-                        size: 20, // Icon size
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-            TextField(
-              controller: _nameController,
-              decoration: InputDecoration(
-                labelText: 'Nama',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15.0),
-                  borderSide: const BorderSide(color: Colors.grey, width: 0.5),
-                ),
-              ),
-            ),
-            const SizedBox(height: 32),
-            TextField(
-              controller: _locationController,
-              decoration: InputDecoration(
-                labelText: 'Domisili',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15.0),
-                  borderSide: const BorderSide(color: Colors.grey, width: 0.5),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF66D6A6),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 8),
-          ),
-          onPressed: _updateProfile,
-          child: const Text(
-            'Perbarui',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

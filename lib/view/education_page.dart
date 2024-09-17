@@ -98,7 +98,7 @@ class EducationPage extends StatelessWidget {
                 children: [
                   // Section 1: Informative Videos
                   const Text(
-                    'Informative Videos',
+                    'Video Rekomendasi',
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
@@ -108,7 +108,7 @@ class EducationPage extends StatelessWidget {
 
                   // Section 2: Articles
                   const Text(
-                    'Articles',
+                    'Artikel',
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
@@ -118,7 +118,7 @@ class EducationPage extends StatelessWidget {
 
                   // Section 3: Infographics
                   const Text(
-                    'Infographics',
+                    'Infografis',
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
@@ -181,7 +181,7 @@ class EducationPage extends StatelessWidget {
 
   Widget _buildHorizontalArticleScroll(List<Map<String, dynamic>> articles) {
     return SizedBox(
-      height: 350,
+      height: 312,
       child: GridView.builder(
         scrollDirection: Axis.horizontal,
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -299,7 +299,37 @@ class EducationPage extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: GestureDetector(
               onTap: () {
-                // Action when infographic is clicked (e.g., open full image or details)
+                // Tampilkan gambar lebih besar dalam popup
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return Dialog(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Gambar yang diperbesar
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10.0),
+                            child: Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          // Tombol close
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop(); // Tutup dialog
+                            },
+                            child: const Text("Close"),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
               },
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8.0),
