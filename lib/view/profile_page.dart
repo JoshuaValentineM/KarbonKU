@@ -511,29 +511,41 @@ class _ProfilePageState extends State<ProfilePage> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Informasi Kendaraan',
-                style: TextStyle(fontSize: 20),
+        bool editMode = false;
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Informasi Kendaraan',
+                    style: TextStyle(fontSize: 20),
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.edit_outlined,
+                      color: Color(0xFF1A373B),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        editMode = !editMode; // Toggle edit mode
+                      });
+                    },
+                  ),
+                ],
               ),
-              IconButton(
-                icon: const Icon(Icons.edit_outlined, color: Color(0xFF1A373B)),
-                onPressed: () {
-                  print('Edit icon pressed');
-                },
+              content: ViewVehicleDetailForm(
+                vehicleId: vehicleId,
+                vehicleType: vehicleType,
+                vehicleName: vehicleName,
+                vehicleAge: vehicleAge,
+                fuelType: fuelType,
+                editMode: editMode, // Pass editMode to the form
               ),
-            ],
-          ),
-          content: ViewVehicleDetailForm(
-            vehicleId: vehicleId,
-            vehicleType: vehicleType,
-            vehicleName: vehicleName,
-            vehicleAge: vehicleAge,
-            fuelType: fuelType,
-          ),
+            );
+          },
         );
       },
     );

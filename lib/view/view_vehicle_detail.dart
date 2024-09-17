@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class ViewVehicleDetailForm extends StatelessWidget {
+class ViewVehicleDetailForm extends StatefulWidget {
   final String vehicleType;
   final String vehicleName;
   final int vehicleAge;
   final String fuelType;
   final String vehicleId;
+  final bool editMode;
 
   const ViewVehicleDetailForm({
     Key? key,
@@ -15,186 +16,331 @@ class ViewVehicleDetailForm extends StatelessWidget {
     required this.vehicleAge,
     required this.fuelType,
     required this.vehicleId,
+    required this.editMode,
   }) : super(key: key);
 
+  @override
+  _ViewVehicleDetailFormState createState() => _ViewVehicleDetailFormState();
+}
+
+class _ViewVehicleDetailFormState extends State<ViewVehicleDetailForm> {
+  late TextEditingController vehicleNameController;
+  late int vehicleAge;
+  late String selectedFuelType;
+  late String selectedVehicleType;
+
+  @override
+  void initState() {
+    super.initState();
+    vehicleNameController = TextEditingController(text: widget.vehicleName);
+    vehicleAge = widget.vehicleAge;
+    selectedFuelType = widget.fuelType;
+    selectedVehicleType = widget.vehicleType;
+  }
+
   Future<String?> fetchEmissionCertificateUrl() async {
-    final docSnapshot = await FirebaseFirestore.instance.collection('vehicles').doc(vehicleId).get();
+    final docSnapshot = await FirebaseFirestore.instance
+        .collection('vehicles')
+        .doc(widget.vehicleId)
+        .get();
     return docSnapshot.data()?['emissionCertificateUrl'] as String?;
+  }
+
+  Future<void> _deleteVehicle() async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('vehicles')
+          .doc(widget.vehicleId)
+          .delete();
+      Navigator.of(context).pop(); // Close dialog on success
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vehicle deleted successfully')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete vehicle: $e')),
+      );
+    }
+  }
+
+  Future<void> _updateVehicle() async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('vehicles')
+          .doc(widget.vehicleId)
+          .update({
+            'vehicleName': vehicleNameController.text,
+            'vehicleAge': vehicleAge,
+            'fuelType': selectedFuelType,
+            'vehicleType': selectedVehicleType,
+          });
+      Navigator.of(context).pop(); // Close dialog on success
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vehicle updated successfully')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update vehicle: $e')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: 370,
-      height: 500,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(right: 30.0),
-                child: Text(
-                  'Jenis Kendaraan',
-                  style: TextStyle(fontFamily: 'Poppins', color: Colors.black),
-                ),
-              ),
-              Wrap(
-                spacing: 12.0,
-                children: [
-                  Image.asset(
-                    vehicleType == 'motor'
-                        ? 'assets/img/MotorbikeIconFillSelected.png'
-                        : 'assets/img/MotorbikeIconFill.png',
-                    width: 46,
-                    height: 46,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(right: 30.0),
+                  child: Text(
+                    'Jenis Kendaraan',
+                    style: TextStyle(fontFamily: 'Poppins', color: Colors.black),
                   ),
-                  Image.asset(
-                    vehicleType == 'mobil'
-                        ? 'assets/img/CarIconFillSelected.png'
-                        : 'assets/img/CarIconFill.png',
-                    width: 46,
-                    height: 46,
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          const Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Nama Kendaraan',
-              style: TextStyle(fontFamily: 'Poppins', color: Colors.black),
-            ),
-          ),
-          const SizedBox(height: 14),
-          TextFormField(
-            initialValue: vehicleName,
-            decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
-            ),
-            readOnly: true,
-          ),
-          const SizedBox(height: 14),
-          const Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Usia Kendaraan (tahun)',
-              style: TextStyle(fontFamily: 'Poppins', color: Colors.black),
-            ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                flex: 2,
-                child: Slider(
-                  value: vehicleAge.toDouble(),
-                  min: 1,
-                  max: 20,
-                  divisions: 19,
-                  label: vehicleAge.toString(),
-                  onChanged: null,
-                  activeColor: const Color(0xFF1A373B),
-                  inactiveColor: const Color(0xFF1A373B),
-                  thumbColor: const Color(0xFF1A373B),
                 ),
-              ),
-              const SizedBox(width: 14),
-              Container(
-                width: 50,
-                height: 30,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(4.0),
-                ),
-                child: Text(
-                  vehicleAge.toString(),
-                  style: const TextStyle(fontFamily: 'Poppins'),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              const Expanded(
-                flex: 2,
-                child: Text(
-                  'Bahan Bakar',
-                  style: TextStyle(fontFamily: 'Poppins', color: Colors.black),
-                ),
-              ),
-              Expanded(
-                flex: 2,
-                child: DropdownButtonFormField<String>(
-                  value: fuelType,
-                  items: <String>['Bensin', 'Diesel'].map((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(
-                        value,
-                        style: const TextStyle(fontFamily: 'Poppins'),
+                Wrap(
+                  spacing: 12.0,
+                  children: [
+                    GestureDetector(
+                      onTap: widget.editMode
+                          ? () {
+                              setState(() {
+                                selectedVehicleType = 'motor';
+                              });
+                            }
+                          : null,
+                      child: Image.asset(
+                        selectedVehicleType == 'motor'
+                            ? 'assets/img/MotorbikeIconFillSelected.png'
+                            : 'assets/img/MotorbikeIconFill.png',
+                        width: 46,
+                        height: 46,
                       ),
-                    );
-                  }).toList(),
-                  onChanged: null,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8.0),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                    GestureDetector(
+                      onTap: widget.editMode
+                          ? () {
+                              setState(() {
+                                selectedVehicleType = 'mobil';
+                              });
+                            }
+                          : null,
+                      child: Image.asset(
+                        selectedVehicleType == 'mobil'
+                            ? 'assets/img/CarIconFillSelected.png'
+                            : 'assets/img/CarIconFill.png',
+                        width: 46,
+                        height: 46,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Nama Kendaraan',
+                style: TextStyle(fontFamily: 'Poppins', color: Colors.black),
+              ),
+            ),
+            const SizedBox(height: 14),
+            TextFormField(
+              controller: vehicleNameController,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+              ),
+              readOnly: !widget.editMode,
+            ),
+            const SizedBox(height: 14),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Usia Kendaraan (tahun)',
+                style: TextStyle(fontFamily: 'Poppins', color: Colors.black),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: Slider(
+                    value: vehicleAge.toDouble(),
+                    min: 1,
+                    max: 20,
+                    divisions: 19,
+                    label: vehicleAge.toString(),
+                    onChanged: widget.editMode
+                        ? (double newValue) {
+                            setState(() {
+                              vehicleAge = newValue.toInt();
+                            });
+                          }
+                        : null,
+                    activeColor: const Color(0xFF1A373B),
+                    inactiveColor: const Color(0xFF1A373B),
+                    thumbColor: const Color(0xFF1A373B),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              const Expanded(
-                flex: 2,
-                child: Text(
-                  'Hasil Uji Emisi',
-                  style: TextStyle(fontFamily: 'Poppins', color: Colors.black),
+                const SizedBox(width: 14),
+                Container(
+                  width: 50,
+                  height: 30,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(4.0),
+                  ),
+                  child: Text(
+                    vehicleAge.toString(),
+                    style: const TextStyle(fontFamily: 'Poppins'),
+                  ),
                 ),
-              ),
-              Expanded(
-                flex: 2,
-                child: FutureBuilder<String?>(
-                  future: fetchEmissionCertificateUrl(),
-                  builder: (BuildContext context, AsyncSnapshot<String?> snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const CircularProgressIndicator();
-                    } else if (snapshot.hasError) {
-                      return const Text('Error loading image');
-                    } else if (snapshot.hasData && snapshot.data != null) {
-                      return ClipRRect(
-                        borderRadius: BorderRadius.circular(8.0),
-                        child: Image.network(
-                          snapshot.data!,
-                          width: 100,
-                          height: 150,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Text('Failed to load image');
-                          },
+              ],
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                const Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Bahan Bakar',
+                    style: TextStyle(fontFamily: 'Poppins', color: Colors.black),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: DropdownButtonFormField<String>(
+                    value: selectedFuelType,
+                    items: <String>['Bensin', 'Diesel'].map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(
+                          value,
+                          style: const TextStyle(fontFamily: 'Poppins'),
                         ),
                       );
-                    } else {
-                      return const Text('No emission certificate');
-                    }
-                  },
+                    }).toList(),
+                    onChanged: widget.editMode
+                        ? (String? newValue) {
+                            setState(() {
+                              selectedFuelType = newValue!;
+                            });
+                          }
+                        : null,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      contentPadding:
+                          const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                    ),
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                const Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Hasil Uji Emisi',
+                    style: TextStyle(fontFamily: 'Poppins', color: Colors.black),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: FutureBuilder<String?>(
+                    future: fetchEmissionCertificateUrl(),
+                    builder:
+                        (BuildContext context, AsyncSnapshot<String?> snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const CircularProgressIndicator();
+                      } else if (snapshot.hasError) {
+                        return const Text('Error loading image');
+                      } else if (snapshot.hasData && snapshot.data != null) {
+                        return ClipRRect(
+                          borderRadius: BorderRadius.circular(8.0),
+                          child: Image.network(
+                            snapshot.data!,
+                            width: 100,
+                            height: 150,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Text('Failed to load image');
+                            },
+                          ),
+                        );
+                      } else {
+                        return const Text('No emission certificate');
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            if (widget.editMode) // Show buttons only in edit mode
+              Row(
+                children: [
+                  Expanded(
+                    flex: 4,
+                    child: ElevatedButton(
+                      onPressed: _deleteVehicle,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFD66666), // Hex color #D66666
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        padding: const EdgeInsets.all(10),
+                      ),
+                      child: const Text(
+                        'Hapus',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          color: Colors.white,
+                          fontSize: 24.0,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 6,
+                    child: ElevatedButton(
+                      onPressed: _updateVehicle,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF66D6A6), // Hex color #66D6A6
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        padding: const EdgeInsets.all(10),
+                      ),
+                      child: const Text(
+                        'Perbarui',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          color: Colors.white,
+                          fontSize: 24.0,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+          ],
+        ),
       ),
     );
   }
