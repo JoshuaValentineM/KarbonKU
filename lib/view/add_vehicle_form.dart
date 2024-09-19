@@ -316,7 +316,7 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
                   flex: 2,
                   child: RichText(
                     text: const TextSpan(
-                      text: 'Sertifikat Hasil Uji Emisi (Optional)',
+                      text: 'Sertifikat Hasil Uji Emisi',
                       style:
                           TextStyle(fontFamily: 'Poppins', color: Colors.black),
                     ),
