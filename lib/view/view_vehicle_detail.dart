@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -74,7 +75,8 @@ class _ViewVehicleDetailFormState extends State<ViewVehicleDetailForm> {
             'fuelType': selectedFuelType,
             'vehicleType': selectedVehicleType,
           });
-      Navigator.of(context).pop(); // Close dialog on success
+          Navigator.pop(context);
+      // Navigator.of(context).pop(); // Close dialog on success
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Vehicle updated successfully')),
       );

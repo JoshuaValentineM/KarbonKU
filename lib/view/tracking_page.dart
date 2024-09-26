@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:karbonku/view/tracking_page.dart';
 import '../middleware/auth_middleware.dart';
 import 'profile_page.dart';
 import 'education_page.dart';
 import 'calculator_page.dart';
+import 'home_page.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class TrackingPage extends StatefulWidget {
+  const TrackingPage({super.key});
 
   @override
-  _HomePageState createState() => _HomePageState();
+  _TrackingPage createState() => _TrackingPage();
 }
 
-class _HomePageState extends State<HomePage> {
-  int _selectedIndex = 2; // Track the selected tab index
+class _TrackingPage extends State<TrackingPage> {
+  int _selectedIndex = 0; // Track the selected tab index
   User? user; // Declare a variable to store the Firebase user
 
   @override
@@ -82,7 +82,7 @@ void _navigateToPage(int index) {
     AuthMiddleware.checkAuthentication(context);
 
     return Scaffold(
-      body: Center(child: Text('Home Page Content')), // Placeholder for the default content
+      body: Center(child: Text('Tracking Page Content')), // Placeholder for the default content
 
       // Persistent BottomNavigationBar for switching between pages
       bottomNavigationBar: BottomNavigationBar(

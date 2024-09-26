@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:karbonku/view/calculator_page.dart';
 import 'view/auth_page.dart';
 import 'view/home_page.dart';
 import 'view/profile_page.dart';
 import 'view/education_page.dart';
 import 'firebase_options.dart';
+import 'view/tracking_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -100,6 +102,8 @@ class MyApp extends StatelessWidget {
           return ProfilePage(user: user!); // Ensure `user` is not null
         },
         '/education': (context) => EducationPage(),
+        '/calculator': (context) => CalculatorPage(),
+        '/tracking': (context) => TrackingPage(),
       },
     );
   }
