@@ -8,6 +8,11 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'edit_profile.dart';
+import 'home_page.dart';
+import 'profile_page.dart';
+import 'education_page.dart';
+import 'tracking_page.dart';
+import 'calculator_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final User user;
@@ -19,6 +24,7 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  int _selectedIndex = 4;
   String displayName = '';
   String profilePicture = '';
   String location = '';
@@ -138,6 +144,39 @@ class _ProfilePageState extends State<ProfilePage> {
               ],
             ),
           ),
+
+          // Persistent BottomNavigationBar for switching between pages
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed, // Ensures that background color stays solid
+        backgroundColor: const Color(0xFF3B645E), // Set background color
+        selectedItemColor: const Color(0xFF66D6A6), // Set color for selected label and icon
+        unselectedItemColor: const Color(0xFFFFFFFF), // Set color for unselected labels and icons
+        currentIndex: _selectedIndex, // Set the selected tab
+        onTap: _onItemTapped, // Handle tab changes and navigate to relevant page
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.map),
+            label: 'Tracking',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.calculate),
+            label: 'Calculator',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.school),
+            label: 'Education',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+        ],
+      ),
+
         );
       },
     );
@@ -550,4 +589,48 @@ class _ProfilePageState extends State<ProfilePage> {
       },
     );
   }
+
+ void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index; // Update selected index
+      _navigateToPage(index); // Call navigation function
+    });
+  }
+
+// Navigate to the respective page based on the index without any transition
+void _navigateToPage(int index) {
+  Widget page;
+
+  switch (index) {
+    case 0:
+      page = const TrackingPage();
+      break;
+    case 1:
+      page = const CalculatorPage();
+      break;
+    case 2:
+      page = const HomePage();
+      break;
+    case 3:
+      page =  EducationPage();
+      break;
+    case 4:
+      page = ProfilePage(user: widget.user);
+      break;
+    default:
+      page = const HomePage();
+  }
+
+  Navigator.pushReplacement(
+    context,
+    PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionDuration: Duration.zero, // No transition duration
+      reverseTransitionDuration: Duration.zero, // No reverse transition duration
+    ),
+  );
 }
+
+
+}
+
