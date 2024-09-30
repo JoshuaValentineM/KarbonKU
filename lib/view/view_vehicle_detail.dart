@@ -1,6 +1,9 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io';
 
 class ViewVehicleDetailForm extends StatefulWidget {
   final String vehicleType;
@@ -9,6 +12,7 @@ class ViewVehicleDetailForm extends StatefulWidget {
   final String fuelType;
   final String vehicleId;
   final bool editMode;
+  final VoidCallback onUpdated;
 
   const ViewVehicleDetailForm({
     Key? key,
@@ -18,6 +22,7 @@ class ViewVehicleDetailForm extends StatefulWidget {
     required this.fuelType,
     required this.vehicleId,
     required this.editMode,
+    required this.onUpdated,
   }) : super(key: key);
 
   @override
@@ -29,6 +34,8 @@ class _ViewVehicleDetailFormState extends State<ViewVehicleDetailForm> {
   late int vehicleAge;
   late String selectedFuelType;
   late String selectedVehicleType;
+  File? _emissionCertificateImage;
+  String? _emissionCertificateUrl;
 
   @override
   void initState() {
@@ -37,6 +44,13 @@ class _ViewVehicleDetailFormState extends State<ViewVehicleDetailForm> {
     vehicleAge = widget.vehicleAge;
     selectedFuelType = widget.fuelType;
     selectedVehicleType = widget.vehicleType;
+
+    // Fetch existing emission certificate URL (if any)
+    fetchEmissionCertificateUrl().then((url) {
+      setState(() {
+        _emissionCertificateUrl = url;
+      });
+    });
   }
 
   Future<String?> fetchEmissionCertificateUrl() async {
@@ -47,13 +61,56 @@ class _ViewVehicleDetailFormState extends State<ViewVehicleDetailForm> {
     return docSnapshot.data()?['emissionCertificateUrl'] as String?;
   }
 
+  Future<void> _pickImage() async {
+    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        _emissionCertificateImage = File(pickedFile.path);
+      });
+    }
+  }
+
+  Future<void> _uploadEmissionCertificate() async {
+    if (_emissionCertificateImage == null) return;
+
+    try {
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('emission_certificates/${widget.vehicleId}');
+      await storageRef.putFile(_emissionCertificateImage!);
+
+      // Retrieve the file's download URL
+      String downloadUrl = await storageRef.getDownloadURL();
+
+      // Update Firestore with the emission certificate URL
+      await FirebaseFirestore.instance
+          .collection('vehicles')
+          .doc(widget.vehicleId)
+          .update({'emissionCertificateUrl': downloadUrl});
+
+      setState(() {
+        _emissionCertificateUrl = downloadUrl;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Emission certificate uploaded successfully')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to upload emission certificate: $e')),
+      );
+    }
+  }
+
   Future<void> _deleteVehicle() async {
     try {
       await FirebaseFirestore.instance
           .collection('vehicles')
           .doc(widget.vehicleId)
           .delete();
-      Navigator.of(context).pop(); // Close dialog on success
+      widget.onUpdated(); // Call the callback to refresh UI
+      Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Vehicle deleted successfully')),
       );
@@ -70,13 +127,19 @@ class _ViewVehicleDetailFormState extends State<ViewVehicleDetailForm> {
           .collection('vehicles')
           .doc(widget.vehicleId)
           .update({
-            'vehicleName': vehicleNameController.text,
-            'vehicleAge': vehicleAge,
-            'fuelType': selectedFuelType,
-            'vehicleType': selectedVehicleType,
-          });
-          Navigator.pop(context);
-      // Navigator.of(context).pop(); // Close dialog on success
+        'vehicleName': vehicleNameController.text,
+        'vehicleAge': vehicleAge,
+        'fuelType': selectedFuelType,
+        'vehicleType': selectedVehicleType,
+      });
+
+      // Upload emission certificate if a new one was selected
+      if (_emissionCertificateImage != null) {
+        await _uploadEmissionCertificate();
+      }
+
+      widget.onUpdated(); // Call the callback to refresh UI
+      Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Vehicle updated successfully')),
       );
@@ -261,37 +324,57 @@ class _ViewVehicleDetailFormState extends State<ViewVehicleDetailForm> {
                     style: TextStyle(fontFamily: 'Poppins', color: Colors.black),
                   ),
                 ),
-                Expanded(
-                  flex: 2,
-                  child: FutureBuilder<String?>(
-                    future: fetchEmissionCertificateUrl(),
-                    builder:
-                        (BuildContext context, AsyncSnapshot<String?> snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const CircularProgressIndicator();
-                      } else if (snapshot.hasError) {
-                        return const Text('Error loading image');
-                      } else if (snapshot.hasData && snapshot.data != null) {
-                        return ClipRRect(
+                if (widget.editMode)
+                  Expanded(
+                    flex: 2,
+                    child: GestureDetector(
+                      onTap: _pickImage,  // Method to pick image
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 10.0),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
                           borderRadius: BorderRadius.circular(8.0),
-                          child: Image.network(
-                            snapshot.data!,
-                            width: 100,
-                            height: 150,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Text('Failed to load image');
-                            },
-                          ),
-                        );
-                      } else {
-                        return const Text('No emission certificate');
-                      }
-                    },
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.upload,
+                              size: 20,
+                              color: Colors.grey,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'Upload File',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  Expanded(
+                    flex: 2,
+                    child: _emissionCertificateUrl != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(8.0),
+                            child: Image.network(
+                              _emissionCertificateUrl!,
+                              width: 100,
+                              height: 150,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : const Text('No emission certificate'),
                   ),
-                ),
               ],
-            ),
+              ),
+
             const SizedBox(height: 20),
             if (widget.editMode) // Show buttons only in edit mode
               Row(
@@ -301,7 +384,7 @@ class _ViewVehicleDetailFormState extends State<ViewVehicleDetailForm> {
                     child: ElevatedButton(
                       onPressed: _deleteVehicle,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFD66666), // Hex color #D66666
+                        backgroundColor: const Color(0xFFD66666),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.0),
                         ),
@@ -323,7 +406,7 @@ class _ViewVehicleDetailFormState extends State<ViewVehicleDetailForm> {
                     child: ElevatedButton(
                       onPressed: _updateVehicle,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF66D6A6), // Hex color #66D6A6
+                        backgroundColor: const Color(0xFF66D6A6),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.0),
                         ),
