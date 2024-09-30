@@ -4,12 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../middleware/auth_middleware.dart';
 import 'add_vehicle_form.dart';
 import 'view_vehicle_detail.dart';
-import 'dart:io';
-import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'edit_profile.dart';
 import 'home_page.dart';
-import 'profile_page.dart';
 import 'education_page.dart';
 import 'tracking_page.dart';
 import 'calculator_page.dart';
@@ -431,8 +427,7 @@ class _ProfilePageState extends State<ProfilePage> {
           return const Center(child: Text('No vehicles found'));
         }
 
-        final List<Map<String, dynamic>> vehicles =
-            snapshot.data!.docs.map((doc) {
+        final List<Map<String, dynamic>> vehicles = snapshot.data!.docs.map((doc) {
           String iconPath;
           if (doc['vehicleType'] == 'motor') {
             iconPath = 'assets/img/motorcycle_icon.png';
@@ -441,74 +436,78 @@ class _ProfilePageState extends State<ProfilePage> {
           }
 
           return {
-            "id": doc.id, // Include vehicle ID
+            "id": doc.id,
             "name": doc['vehicleName'],
             "icon": iconPath,
           };
         }).toList();
 
-        return Wrap(
-          spacing: 20,
-          runSpacing: 20,
-          children: vehicles.map((vehicle) {
-            return Column(
-              children: [
-                Container(
-                  width: 70,
-                  height: 70,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: const Color(0xFF1A373B),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        spreadRadius: 2,
-                        blurRadius: 6,
-                        offset: const Offset(0, 3),
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: vehicles.map((vehicle) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 70,
+                      height: 70,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFF1A373B),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            spreadRadius: 2,
+                            blurRadius: 6,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: IconButton(
-                    icon: Image.asset(
-                      vehicle["icon"]!,
-                      width: 35,
-                    ),
-                    iconSize: 40,
-                    onPressed: () async {
-                      DocumentSnapshot vehicleDoc = await firestore
-                          .collection('vehicles')
-                          .doc(vehicle["id"])
-                          .get();
+                      child: IconButton(
+                        icon: Image.asset(
+                          vehicle["icon"]!,
+                          width: 35,
+                        ),
+                        iconSize: 40,
+                        onPressed: () async {
+                          DocumentSnapshot vehicleDoc = await firestore
+                              .collection('vehicles')
+                              .doc(vehicle["id"])
+                              .get();
 
-                      if (vehicleDoc.exists) {
-                        _showVehicleDetailDialog(
-                          context,
-                          vehicle["id"],
-                          vehicleDoc['vehicleType'],
-                          vehicleDoc['vehicleName'],
-                          vehicleDoc['vehicleAge'],
-                          vehicleDoc['fuelType'],
-                        );
-                      } else {
-                        print('Vehicle not found');
-                      }
-                    },
-                  ),
+                          if (vehicleDoc.exists) {
+                            _showVehicleDetailDialog(
+                              context,
+                              vehicle["id"],
+                              vehicleDoc['vehicleType'],
+                              vehicleDoc['vehicleName'],
+                              vehicleDoc['vehicleAge'],
+                              vehicleDoc['fuelType'],
+                            );
+                          } else {
+                            print('Vehicle not found');
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: 70,
+                      child: Text(
+                        vehicle["name"]!,
+                        style: const TextStyle(color: Colors.black),
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: 70,
-                  child: Text(
-                    vehicle["name"]!,
-                    style: const TextStyle(color: Colors.black),
-                    textAlign: TextAlign.center,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
-                ),
-              ],
-            );
-          }).toList(),
+              );
+            }).toList(),
+          ),
         );
       },
     );
@@ -581,7 +580,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 vehicleName: vehicleName,
                 vehicleAge: vehicleAge,
                 fuelType: fuelType,
-                editMode: editMode, // Pass editMode to the form
+                editMode: editMode,
+                onUpdated: _loadUserProfile, // Refresh the profile page
               ),
             );
           },
@@ -590,47 +590,45 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
- void _onItemTapped(int index) {
+  void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index; // Update selected index
       _navigateToPage(index); // Call navigation function
     });
   }
 
-// Navigate to the respective page based on the index without any transition
-void _navigateToPage(int index) {
-  Widget page;
+  // Navigate to the respective page based on the index without any transition
+  void _navigateToPage(int index) {
+    Widget page;
 
-  switch (index) {
-    case 0:
-      page = const TrackingPage();
-      break;
-    case 1:
-      page = const CalculatorPage();
-      break;
-    case 2:
-      page = const HomePage();
-      break;
-    case 3:
-      page =  EducationPage();
-      break;
-    case 4:
-      page = ProfilePage(user: widget.user);
-      break;
-    default:
-      page = const HomePage();
+    switch (index) {
+      case 0:
+        page = const TrackingPage();
+        break;
+      case 1:
+        page = const CalculatorPage();
+        break;
+      case 2:
+        page = const HomePage();
+        break;
+      case 3:
+        page =  EducationPage();
+        break;
+      case 4:
+        page = ProfilePage(user: widget.user);
+        break;
+      default:
+        page = const HomePage();
+    }
+
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => page,
+        transitionDuration: Duration.zero, // No transition duration
+        reverseTransitionDuration: Duration.zero, // No reverse transition duration
+      ),
+    );
   }
-
-  Navigator.pushReplacement(
-    context,
-    PageRouteBuilder(
-      pageBuilder: (context, animation, secondaryAnimation) => page,
-      transitionDuration: Duration.zero, // No transition duration
-      reverseTransitionDuration: Duration.zero, // No reverse transition duration
-    ),
-  );
-}
-
-
 }
 
