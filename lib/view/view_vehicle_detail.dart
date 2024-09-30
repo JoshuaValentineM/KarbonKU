@@ -150,6 +150,70 @@ class _ViewVehicleDetailFormState extends State<ViewVehicleDetailForm> {
     }
   }
 
+  Future<void> _showDeleteConfirmationDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 16.0),
+                child: Text(
+                  'Apakah Anda yakin ingin menghapus kendaraan ini?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16),
+                ),
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      backgroundColor: const Color(0xFFE3E5E5),
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25.0),
+                      ),
+                    ),
+                    child: const Text('Batal'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ),
+                const VerticalDivider(),
+                Expanded(
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      backgroundColor: const Color(0xFFE3E5E5),
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25.0),
+                      ),
+                    ),
+                    child: const Text('Hapus'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      _deleteVehicle();
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -382,7 +446,7 @@ class _ViewVehicleDetailFormState extends State<ViewVehicleDetailForm> {
                   Expanded(
                     flex: 4,
                     child: ElevatedButton(
-                      onPressed: _deleteVehicle,
+                      onPressed: _showDeleteConfirmationDialog, // Show confirmation dialog
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFD66666),
                         shape: RoundedRectangleBorder(
