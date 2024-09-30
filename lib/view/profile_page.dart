@@ -50,9 +50,7 @@ class _ProfilePageState extends State<ProfilePage> {
   void _signOut(BuildContext context) async {
     try {
       await FirebaseAuth.instance.signOut();
-      Navigator.popUntil(
-          context, ModalRoute.withName('/home')); // Pop until root route
-      Navigator.pushReplacementNamed(context, '/auth'); // Push the auth route
+      Navigator.pushReplacementNamed(context, '/auth');
     } catch (e) {
       print('Error logging out: $e');
     }
