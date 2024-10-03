@@ -72,6 +72,7 @@ flutter:
     - assets/img/CarIconFill.png
     - assets/img/CarIconFillSelected.png
     - assets/img/placeholder.png
+    - assets/img/carbon_standard.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
