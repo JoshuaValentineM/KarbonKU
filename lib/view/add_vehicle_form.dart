@@ -23,6 +23,7 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
   File? _emissionCertificateImage;
 
   final ImagePicker _picker = ImagePicker();
+  bool _vehicleTypeError = false; // Flag for vehicle type validation
 
   // Method to pick image from gallery
   Future<void> _pickImage() async {
@@ -50,7 +51,11 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
   }
 
   void _submitForm() async {
-    if (_formKey.currentState?.validate() ?? false) {
+    setState(() {
+      _vehicleTypeError = _selectedVehicleType == null;
+    });
+
+    if (_formKey.currentState?.validate() ?? false && !_vehicleTypeError) {
       final vehicleType = _selectedVehicleType ?? '';
       final vehicleName = _vehicleNameController.text;
       final vehicleAge = _vehicleAge.toInt(); // Convert to int
@@ -90,6 +95,7 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
   void _selectVehicle(String vehicleType) {
     setState(() {
       _selectedVehicleType = vehicleType;
+      _vehicleTypeError = false; // Clear error when user selects a vehicle
     });
   }
 
@@ -113,7 +119,8 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
                       textAlign: TextAlign.start,
                       text: const TextSpan(
                         text: 'Jenis Kendaraan',
-                        style: TextStyle(fontFamily: 'Poppins', color: Colors.black),
+                        style: TextStyle(
+                            fontFamily: 'Poppins', color: Colors.black),
                         children: <TextSpan>[
                           TextSpan(
                             text: ' *',
@@ -151,6 +158,18 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
                   ),
                 ],
               ),
+              // Display error message for vehicle type
+              if (_vehicleTypeError)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Harap pilih jenis kendaraan',
+                      style: TextStyle(color: Colors.red, fontSize: 12),
+                    ),
+                  ),
+                ),
               const SizedBox(height: 14),
               // Vehicle name input field
               Align(
@@ -158,7 +177,8 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
                 child: RichText(
                   text: const TextSpan(
                     text: 'Nama Kendaraan',
-                    style: TextStyle(fontFamily: 'Poppins', color: Colors.black),
+                    style:
+                        TextStyle(fontFamily: 'Poppins', color: Colors.black),
                     children: <TextSpan>[
                       TextSpan(
                         text: ' *',
@@ -181,7 +201,8 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
                       color: Colors.blue,
                     ),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                  contentPadding: const EdgeInsets.symmetric(
+                      vertical: 8.0, horizontal: 12.0),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -197,7 +218,8 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
                 child: RichText(
                   text: const TextSpan(
                     text: 'Usia Kendaraan (tahun)',
-                    style: TextStyle(fontFamily: 'Poppins', color: Colors.black),
+                    style:
+                        TextStyle(fontFamily: 'Poppins', color: Colors.black),
                     children: <TextSpan>[
                       TextSpan(
                         text: ' *',
@@ -253,7 +275,8 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
                     child: RichText(
                       text: const TextSpan(
                         text: 'Bahan Bakar',
-                        style: TextStyle(fontFamily: 'Poppins', color: Colors.black),
+                        style: TextStyle(
+                            fontFamily: 'Poppins', color: Colors.black),
                         children: <TextSpan>[
                           TextSpan(
                             text: ' *',
@@ -313,7 +336,8 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
                     child: RichText(
                       text: const TextSpan(
                         text: 'Hasil Uji Emisi',
-                        style: TextStyle(fontFamily: 'Poppins', color: Colors.black),
+                        style: TextStyle(
+                            fontFamily: 'Poppins', color: Colors.black),
                       ),
                     ),
                   ),
@@ -322,7 +346,8 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
                     child: GestureDetector(
                       onTap: _pickImage,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 10.0),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 8.0, horizontal: 10.0),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.grey),
                           borderRadius: BorderRadius.circular(8.0),
@@ -351,27 +376,27 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
                   ),
                 ],
               ),
-               const SizedBox(height: 28),
-            // Submit button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _submitForm,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF66D6A6),
-                  padding: const EdgeInsets.symmetric(vertical: 12.0),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0),
+              const SizedBox(height: 28),
+              // Submit button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _submitForm,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF66D6A6),
+                    padding: const EdgeInsets.symmetric(vertical: 12.0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                  child: const Text(
+                    'Tambah',
+                    style: TextStyle(
+                      color: Colors.white,
+                    ),
                   ),
                 ),
-                child: const Text(
-                  'Tambah',
-                  style: TextStyle(
-                    color: Colors.white,
-                  ),
-              ),
-              ),
-            )
+              )
             ],
           ),
         ),

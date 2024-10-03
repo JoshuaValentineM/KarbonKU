@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:karbonku/view/custom_bottom_nav.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../middleware/auth_middleware.dart';
 
@@ -8,6 +9,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class EducationPage extends StatelessWidget {
   EducationPage({super.key});
+  int _selectedIndex = 3;
+  final user = FirebaseAuth.instance.currentUser;
 
   final List<String> _monthNames = [
     'January',
@@ -122,6 +125,10 @@ class EducationPage extends StatelessWidget {
             ),
           );
         },
+      ),
+      bottomNavigationBar: CustomBottomNavBar(
+        selectedIndex: _selectedIndex,
+        user: user,
       ),
     );
   }

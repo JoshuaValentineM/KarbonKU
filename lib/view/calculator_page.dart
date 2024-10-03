@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:karbonku/view/custom_bottom_nav.dart';
 import 'home_page.dart';
 import 'profile_page.dart';
 import 'education_page.dart';
@@ -29,103 +30,84 @@ class _CalculatorPageState extends State<CalculatorPage> {
     });
   }
 
-void _showWarningBottomSheet() {
-  showModalBottomSheet(
-    context: context,
-    builder: (BuildContext context) {
-      return Container(
-        width: MediaQuery.of(context).size.width,
-        height: MediaQuery.of(context).size.height * 0.35,
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "UU Nomor 7 Tahun 2021",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8), // Space between text and divider
-            const Divider(), // Divider line
-            const SizedBox(height: 8), // Space after the divider
-            const Text(
-              "Tarif pajak karbon ditetapkan lebih tinggi atau sama dengan harga karbon di pasar karbon per kilogram karbon dioksida ekuivalen (CO2e) atau satuan yang setara (Rp30,00).",
-              style: TextStyle(fontSize: 14),
-              textAlign: TextAlign.justify,
-            ),
-            const Spacer(), // To push the button to the bottom
-            Center(
-              child: Container(
-                width: double.infinity, // Make button full width
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF66D6A6), // Background color
-                    padding: const EdgeInsets.symmetric(vertical: 12), // Button height
+  void _showWarningBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          width: MediaQuery.of(context).size.width,
+          height: MediaQuery.of(context).size.height * 0.35,
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Text(
+                    "UU Nomor 7 Tahun 2021",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-                  onPressed: () {
-                    Navigator.pop(context); // Close the bottom sheet
-                  },
-                  child: const Text(
-                    "Mengerti",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white, // Text color
+                  const SizedBox(width: 8), // Space between text and image
+                  Image.asset(
+                    'assets/img/informationIcon.png', // Path to informationIcon.png
+                    width: 14,
+                    height: 14,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8), // Space between text and divider
+              const Divider(), // Divider line
+              const SizedBox(height: 8), // Space after the divider
+              const Text(
+                "Tarif pajak karbon ditetapkan lebih tinggi atau sama dengan harga karbon di pasar karbon per kilogram karbon dioksida ekuivalen (CO2e) atau satuan yang setara (Rp30,00).",
+                style: TextStyle(fontSize: 14),
+                textAlign: TextAlign.justify,
+              ),
+              const Spacer(),
+              const Text(
+                "BAB VI Pasal 13 ayat (8) dan (9)",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              const Spacer(), // To push the button to the bottom
+              Center(
+                child: SizedBox(
+                  width: double.infinity, // Make button full width
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context); // Close the bottom sheet
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          const Color(0xFF66D6A6), // Background color
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12), // Button height
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(8.0), // Border radius
+                      ),
+                    ),
+                    child: const Text(
+                      "Mengerti",
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.white, // Text color
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
-        ),
-      );
-    },
-  );
-}
-
- void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index; // Update selected index
-      _navigateToPage(index); // Call navigation function
-    });
+            ],
+          ),
+        );
+      },
+    );
   }
-
-// Navigate to the respective page based on the index without any transition
-void _navigateToPage(int index) {
-  Widget page;
-
-  switch (index) {
-    case 0:
-      page = const TrackingPage();
-      break;
-    case 1:
-      page = const CalculatorPage();
-      break;
-    case 2:
-      page = const HomePage();
-      break;
-    case 3:
-      page =  EducationPage();
-      break;
-    case 4: 
-      page = ProfilePage(user: user!);
-      break;
-    default:
-      page = const HomePage();
-  }
-
-  Navigator.pushReplacement(
-    context,
-    PageRouteBuilder(
-      pageBuilder: (context, animation, secondaryAnimation) => page,
-      transitionDuration: Duration.zero, // No transition duration
-      reverseTransitionDuration: Duration.zero, // No reverse transition duration
-    ),
-  );
-}
 
   @override
   Widget build(BuildContext context) {
-    final double width = MediaQuery.of(context).size.width * 0.85; // 85% of screen width
+    final double width =
+        MediaQuery.of(context).size.width * 0.85; // 85% of screen width
 
     return Scaffold(
       backgroundColor: const Color(0xFFEFFFF8),
@@ -243,7 +225,7 @@ void _navigateToPage(int index) {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                     Image.asset(
+                      Image.asset(
                         'assets/img/MotorbikeIconFill.png', // Ensure MotorbikeIconFill.png is in assets
                         width: 24,
                         height: 24,
@@ -265,10 +247,10 @@ void _navigateToPage(int index) {
                   ),
                   const SizedBox(height: 16), // Space after header
 
-                   Row(
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                     Image.asset(
+                      Image.asset(
                         'assets/img/CarIconFill.png', // Ensure MotorbikeIconFill.png is in assets
                         width: 24,
                         height: 24,
@@ -293,24 +275,26 @@ void _navigateToPage(int index) {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                     
-                    Text(
+                      Text(
                         'Tarif Pajak Karbon',
                         style: TextStyle(fontFamily: 'Poppins', fontSize: 16),
                       ),
-                    SizedBox(width: 8),
-                    
-                    GestureDetector( // Use GestureDetector instead of IconButton
-                      onTap: _showWarningBottomSheet, // Call the method on tap
-                      child: Icon(
-                        Icons.warning_amber_rounded,
-                        size: 24, // You can adjust the size here
-                      ),
-                    ),
+                      SizedBox(width: 8),
 
-                    Spacer(),
-                    SizedBox(width: 8), // Space before the weight
-                    Text(
+                      GestureDetector(
+                        // Use GestureDetector instead of IconButton
+                        onTap:
+                            _showWarningBottomSheet, // Call the method on tap
+                        child: Image.asset(
+                          'assets/img/informationIcon.png', // Ensure the image is in the assets
+                          width: 14,
+                          height: 14,
+                        ),
+                      ),
+
+                      Spacer(),
+                      SizedBox(width: 8), // Space before the weight
+                      Text(
                         'Rp30,00',
                         style: TextStyle(fontFamily: 'Poppins', fontSize: 16),
                       ),
@@ -321,15 +305,14 @@ void _navigateToPage(int index) {
                   const Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                     
-                       Text(
+                      Text(
                         'Pajak Honda Beat',
                         style: TextStyle(fontFamily: 'Poppins', fontSize: 16),
                       ),
 
-                       Spacer(),
-                       SizedBox(width: 8), // Space before the weight
-                       Text(
+                      Spacer(),
+                      SizedBox(width: 8), // Space before the weight
+                      Text(
                         'Rp18000,00',
                         style: TextStyle(fontFamily: 'Poppins', fontSize: 16),
                       ),
@@ -340,16 +323,15 @@ void _navigateToPage(int index) {
                   const Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                     
-                       Text(
+                      Text(
                         'Pajak Creta',
                         style: TextStyle(fontFamily: 'Poppins', fontSize: 16),
                       ),
 
-                       Spacer(),
-                       SizedBox(width: 8), // Space before the weight
-                       Text(
-                        'Rp30.000,00',
+                      Spacer(),
+                      SizedBox(width: 8), // Space before the weight
+                      Text(
+                        'Rp30000,00',
                         style: TextStyle(fontFamily: 'Poppins', fontSize: 16),
                       ),
                     ],
@@ -359,7 +341,7 @@ void _navigateToPage(int index) {
                   const Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                       Text(
+                      Text(
                         'Total',
                         style: TextStyle(fontFamily: 'Poppins', fontSize: 16),
                       ),
@@ -370,13 +352,16 @@ void _navigateToPage(int index) {
                   const Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                       Text(
+                      Text(
                         'Rp48.000,00',
-                        style: TextStyle(fontFamily: 'Poppins', fontSize: 24, fontWeight: FontWeight.w500, color: Color(0xFF66D6A6)),
+                        style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 24,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF66D6A6)),
                       ),
                     ],
                   ),
-
                 ],
               ),
             ),
@@ -397,39 +382,10 @@ void _navigateToPage(int index) {
           ],
         ),
       ),
-
-       // Persistent BottomNavigationBar for switching between pages
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed, // Ensures that background color stays solid
-        backgroundColor: const Color(0xFF3B645E), // Set background color
-        selectedItemColor: const Color(0xFF66D6A6), // Set color for selected label and icon
-        unselectedItemColor: const Color(0xFFFFFFFF), // Set color for unselected labels and icons
-        currentIndex: _selectedIndex, // Set the selected tab
-        onTap: _onItemTapped, // Handle tab changes and navigate to relevant page
-        items: const <BottomNavigationBarItem>[
-           BottomNavigationBarItem(
-            icon: Icon(Icons.map),
-            label: 'Tracking',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calculate),
-            label: 'Calculator',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.school),
-            label: 'Education',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
+      bottomNavigationBar: CustomBottomNavBar(
+        selectedIndex: _selectedIndex,
+        user: user,
       ),
-      
     );
   }
 }

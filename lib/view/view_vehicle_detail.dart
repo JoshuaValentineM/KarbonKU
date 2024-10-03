@@ -62,7 +62,8 @@ class _ViewVehicleDetailFormState extends State<ViewVehicleDetailForm> {
   }
 
   Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
       setState(() {
@@ -94,7 +95,8 @@ class _ViewVehicleDetailFormState extends State<ViewVehicleDetailForm> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Emission certificate uploaded successfully')),
+        const SnackBar(
+            content: Text('Emission certificate uploaded successfully')),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -228,7 +230,8 @@ class _ViewVehicleDetailFormState extends State<ViewVehicleDetailForm> {
                   padding: EdgeInsets.only(right: 30.0),
                   child: Text(
                     'Jenis Kendaraan',
-                    style: TextStyle(fontFamily: 'Poppins', color: Colors.black),
+                    style:
+                        TextStyle(fontFamily: 'Poppins', color: Colors.black),
                   ),
                 ),
                 Wrap(
@@ -344,7 +347,8 @@ class _ViewVehicleDetailFormState extends State<ViewVehicleDetailForm> {
                   flex: 2,
                   child: Text(
                     'Bahan Bakar',
-                    style: TextStyle(fontFamily: 'Poppins', color: Colors.black),
+                    style:
+                        TextStyle(fontFamily: 'Poppins', color: Colors.black),
                   ),
                 ),
                 Expanded(
@@ -371,8 +375,8 @@ class _ViewVehicleDetailFormState extends State<ViewVehicleDetailForm> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
                       ),
-                      contentPadding:
-                          const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 8.0, horizontal: 12.0),
                     ),
                   ),
                 ),
@@ -385,16 +389,18 @@ class _ViewVehicleDetailFormState extends State<ViewVehicleDetailForm> {
                   flex: 2,
                   child: Text(
                     'Hasil Uji Emisi',
-                    style: TextStyle(fontFamily: 'Poppins', color: Colors.black),
+                    style:
+                        TextStyle(fontFamily: 'Poppins', color: Colors.black),
                   ),
                 ),
                 if (widget.editMode)
                   Expanded(
                     flex: 2,
                     child: GestureDetector(
-                      onTap: _pickImage,  // Method to pick image
+                      onTap: _pickImage, // Method to pick image
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 10.0),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 8.0, horizontal: 10.0),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.grey),
                           borderRadius: BorderRadius.circular(8.0),
@@ -437,8 +443,7 @@ class _ViewVehicleDetailFormState extends State<ViewVehicleDetailForm> {
                         : const Text('No emission certificate'),
                   ),
               ],
-              ),
-
+            ),
             const SizedBox(height: 20),
             if (widget.editMode) // Show buttons only in edit mode
               Row(
@@ -446,7 +451,8 @@ class _ViewVehicleDetailFormState extends State<ViewVehicleDetailForm> {
                   Expanded(
                     flex: 4,
                     child: ElevatedButton(
-                      onPressed: _showDeleteConfirmationDialog, // Show confirmation dialog
+                      onPressed:
+                          _showDeleteConfirmationDialog, // Show confirmation dialog
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFD66666),
                         shape: RoundedRectangleBorder(
