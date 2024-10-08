@@ -319,13 +319,13 @@ class EducationPage extends StatelessWidget {
                               fit: BoxFit.cover,
                             ),
                           ),
-                          // Tombol close
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pop(); // Tutup dialog
-                            },
-                            child: const Text("Close"),
-                          ),
+                          // // Tombol close
+                          // TextButton(
+                          //   onPressed: () {
+                          //     Navigator.of(context).pop(); // Tutup dialog
+                          //   },
+                          //   child: const Text("Close"),
+                          // ),
                         ],
                       ),
                     );
