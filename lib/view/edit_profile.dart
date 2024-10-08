@@ -90,91 +90,113 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Ubah Profil'),
-      content: SingleChildScrollView(
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15.0),
+      ),
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.85,
+        padding: const EdgeInsets.all(16.0),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            GestureDetector(
-              onTap: _pickImage,
-              child: Stack(
+            const Text(
+              'Ubah Profil',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            SingleChildScrollView(
+              child: Column(
                 children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundImage: _imageFile != null
-                        ? FileImage(_imageFile!) as ImageProvider
-                        : NetworkImage(_profilePictureUrl) as ImageProvider,
-                  ),
-                  Positioned(
-                    bottom: 4,
-                    right: 7,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFF66D6A6),
-                        border: Border.all(
-                          color: const Color(0xFF66D6A6),
-                          width: 2.0,
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 50,
+                          backgroundImage: _imageFile != null
+                              ? FileImage(_imageFile!) as ImageProvider
+                              : NetworkImage(_profilePictureUrl)
+                                  as ImageProvider,
                         ),
+                        Positioned(
+                          bottom: 4,
+                          right: 7,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: const Color(0xFF66D6A6),
+                              border: Border.all(
+                                color: const Color(0xFF66D6A6),
+                                width: 2.0,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.camera_alt,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  TextField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      labelText: 'Nama',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15.0),
+                        borderSide:
+                            const BorderSide(color: Colors.grey, width: 0.5),
                       ),
-                      child: const Icon(
-                        Icons.camera_alt,
-                        color: Colors.white,
-                        size: 20,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  TextField(
+                    controller: _locationController,
+                    decoration: InputDecoration(
+                      labelText: 'Domisili',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15.0),
+                        borderSide:
+                            const BorderSide(color: Colors.grey, width: 0.5),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  // Menggunakan SizedBox untuk menyamakan lebar tombol dengan TextField
+                  SizedBox(
+                    width: double.infinity, // Mengisi seluruh lebar container
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF66D6A6),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 40, vertical: 8),
+                      ),
+                      onPressed: _updateProfile,
+                      child: const Text(
+                        'Perbarui',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 32),
-            TextField(
-              controller: _nameController,
-              decoration: InputDecoration(
-                labelText: 'Nama',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15.0),
-                  borderSide: const BorderSide(color: Colors.grey, width: 0.5),
-                ),
-              ),
-            ),
-            const SizedBox(height: 32),
-            TextField(
-              controller: _locationController,
-              decoration: InputDecoration(
-                labelText: 'Domisili',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15.0),
-                  borderSide: const BorderSide(color: Colors.grey, width: 0.5),
-                ),
-              ),
-            ),
           ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF66D6A6),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 8),
-          ),
-          onPressed: _updateProfile,
-          child: const Text(
-            'Perbarui',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

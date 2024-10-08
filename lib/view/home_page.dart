@@ -83,7 +83,7 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
-              SizedBox(height: 5), // Add some space for the table
+              SizedBox(height: 15), // Add some space for the table
               // Table with specified contents
               Table(
                 // Remove borders by not specifying a border
@@ -102,7 +102,7 @@ class _HomePageState extends State<HomePage> {
                         verticalAlignment: TableCellVerticalAlignment.middle,
                         child: Padding(
                           padding: EdgeInsets.all(2), // Reduced padding
-                          child: Image.asset('assets/img/daun.png',
+                          child: Image.asset('assets/img/jarak.png',
                               width: 20, height: 20), // Adjust size
                         ),
                       ),
@@ -121,10 +121,11 @@ class _HomePageState extends State<HomePage> {
                   TableRow(
                     children: [
                       Padding(
-                        padding: EdgeInsets.all(4),
+                        padding:
+                            EdgeInsets.symmetric(vertical: 8, horizontal: 2),
                         child: Text(
                           "Harian",
-                          textAlign: TextAlign.center, // Centered text
+                          textAlign: TextAlign.left,
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 15, // Adjusted font size
@@ -132,24 +133,26 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       Padding(
-                        padding: EdgeInsets.all(4),
+                        padding:
+                            EdgeInsets.symmetric(vertical: 8, horizontal: 2),
                         child: Text(
                           "21.92 - 32.88 km",
                           textAlign: TextAlign.center, // Centered text
                           style: TextStyle(
                             color: Color(0xFF66D6A6),
-                            fontSize: 13, // Adjusted font size
+                            fontSize: 12, // Adjusted font size
                           ),
                         ),
                       ),
                       Padding(
-                        padding: EdgeInsets.all(4),
+                        padding:
+                            EdgeInsets.symmetric(vertical: 8, horizontal: 2),
                         child: Text(
                           "5.48 kg",
                           textAlign: TextAlign.center, // Centered text
                           style: TextStyle(
                             color: Color(0xFF66D6A6),
-                            fontSize: 13, // Adjusted font size
+                            fontSize: 12, // Adjusted font size
                           ),
                         ),
                       ),
@@ -159,10 +162,11 @@ class _HomePageState extends State<HomePage> {
                   TableRow(
                     children: [
                       Padding(
-                        padding: EdgeInsets.all(4),
+                        padding:
+                            EdgeInsets.symmetric(vertical: 8, horizontal: 2),
                         child: Text(
                           "Mingguan",
-                          textAlign: TextAlign.center, // Centered text
+                          textAlign: TextAlign.left,
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 15, // Adjusted font size
@@ -170,24 +174,26 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       Padding(
-                        padding: EdgeInsets.all(4),
+                        padding:
+                            EdgeInsets.symmetric(vertical: 8, horizontal: 2),
                         child: Text(
                           "153.44 - 230.16 km",
                           textAlign: TextAlign.center, // Centered text
                           style: TextStyle(
                             color: Color(0xFF66D6A6),
-                            fontSize: 13, // Adjusted font size
+                            fontSize: 12, // Adjusted font size
                           ),
                         ),
                       ),
                       Padding(
-                        padding: EdgeInsets.all(4),
+                        padding:
+                            EdgeInsets.symmetric(vertical: 8, horizontal: 2),
                         child: Text(
                           "38.36 kg",
                           textAlign: TextAlign.center, // Centered text
                           style: TextStyle(
                             color: Color(0xFF66D6A6),
-                            fontSize: 13, // Adjusted font size
+                            fontSize: 12, // Adjusted font size
                           ),
                         ),
                       ),
@@ -197,10 +203,11 @@ class _HomePageState extends State<HomePage> {
                   TableRow(
                     children: [
                       Padding(
-                        padding: EdgeInsets.all(4),
+                        padding:
+                            EdgeInsets.symmetric(vertical: 8, horizontal: 2),
                         child: Text(
                           "Bulanan",
-                          textAlign: TextAlign.center, // Centered text
+                          textAlign: TextAlign.left,
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 15, // Adjusted font size
@@ -208,24 +215,26 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       Padding(
-                        padding: EdgeInsets.all(4),
+                        padding:
+                            EdgeInsets.symmetric(vertical: 8, horizontal: 2),
                         child: Text(
                           "613.76 - 920.64 km",
                           textAlign: TextAlign.center, // Centered text
                           style: TextStyle(
                             color: Color(0xFF66D6A6),
-                            fontSize: 13, // Adjusted font size
+                            fontSize: 12, // Adjusted font size
                           ),
                         ),
                       ),
                       Padding(
-                        padding: EdgeInsets.all(4),
+                        padding:
+                            EdgeInsets.symmetric(vertical: 8, horizontal: 2),
                         child: Text(
                           "153.44 kg",
                           textAlign: TextAlign.center, // Centered text
                           style: TextStyle(
                             color: Color(0xFF66D6A6),
-                            fontSize: 13, // Adjusted font size
+                            fontSize: 12, // Adjusted font size
                           ),
                         ),
                       ),
@@ -235,10 +244,11 @@ class _HomePageState extends State<HomePage> {
                   TableRow(
                     children: [
                       Padding(
-                        padding: EdgeInsets.all(4),
+                        padding:
+                            EdgeInsets.symmetric(vertical: 8, horizontal: 2),
                         child: Text(
                           "Tahunan",
-                          textAlign: TextAlign.center, // Centered text
+                          textAlign: TextAlign.left,
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 15, // Adjusted font size
@@ -246,24 +256,26 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       Padding(
-                        padding: EdgeInsets.all(4),
+                        padding:
+                            EdgeInsets.symmetric(vertical: 8, horizontal: 2),
                         child: Text(
                           "8,076.8 - 12,115.2 km",
                           textAlign: TextAlign.center, // Centered text
                           style: TextStyle(
                             color: Color(0xFF66D6A6),
-                            fontSize: 13, // Adjusted font size
+                            fontSize: 12, // Adjusted font size
                           ),
                         ),
                       ),
                       Padding(
-                        padding: EdgeInsets.all(4),
+                        padding:
+                            EdgeInsets.symmetric(vertical: 8, horizontal: 2),
                         child: Text(
                           "2019.2 kg",
                           textAlign: TextAlign.center, // Centered text
                           style: TextStyle(
                             color: Color(0xFF66D6A6),
-                            fontSize: 13, // Adjusted font size
+                            fontSize: 12, // Adjusted font size
                           ),
                         ),
                       ),
@@ -295,6 +307,15 @@ class _HomePageState extends State<HomePage> {
     AuthMiddleware.checkAuthentication(context);
 
     return Scaffold(
+        backgroundColor: const Color(0xFFEFFFF8),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF3B645E),
+          elevation: 0,
+          title: const Text(
+            'Home',
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
         body: SingleChildScrollView(
           child: Column(
             children: [
