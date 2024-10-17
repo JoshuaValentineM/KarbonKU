@@ -2,7 +2,16 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        // [required] flutter_background_geolocation
+        maven { url "${project(':flutter_background_geolocation').projectDir}/libs" }
+        maven { url 'https://developer.huawei.com/repo/' }
+        // [required] background_fetch
+        maven { url "${project(':background_fetch').projectDir}/libs" }
     }
+}
+
+ext {
+    playServicesLocationVersion = "21.0.1"  // or higher / as desired
 }
 
 rootProject.buildDir = '../build'
