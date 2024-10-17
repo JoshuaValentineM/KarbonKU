@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:karbonku/model/Vehicle.dart';
 import 'package:karbonku/view/custom_bottom_nav.dart';
 import 'home_page.dart';
 import 'profile_page.dart';
@@ -17,6 +18,26 @@ class _CalculatorPageState extends State<CalculatorPage> {
   final user = FirebaseAuth.instance.currentUser;
   int _selectedIndex = 1;
   int currentYear = DateTime.now().year; // Current year
+
+  double carbonTaxRate = 30; // Tarif pajak karbon per kilogram CO2e
+
+  // Data kendaraan dummy
+  List<Vehicle> vehicles = [
+    Vehicle(
+        vehicleType: 'Motor', vehicleName: 'Honda Beat', vehicleEmission: 600),
+    Vehicle(
+        vehicleType: 'Mobil',
+        vehicleName: 'Toyota Creta',
+        vehicleEmission: 1000),
+  ];
+
+  double calculateTotalTax() {
+    double totalTax = 0;
+    for (var vehicle in vehicles) {
+      totalTax += vehicle.vehicleEmission * carbonTaxRate;
+    }
+    return totalTax;
+  }
 
   void incrementYear() {
     setState(() {
@@ -130,7 +151,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
                 width: width, // Using 85% of the screen width
                 height: 54, // Height of the box
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8.0),
+                  borderRadius: BorderRadius.circular(20.0),
                   gradient: const LinearGradient(
                     colors: [Color(0xFF1A373B), Color(0xFF3B645E)],
                     begin: Alignment.topCenter,
@@ -222,67 +243,45 @@ class _CalculatorPageState extends State<CalculatorPage> {
                   ),
                   const SizedBox(height: 16), // Space after header
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Image.asset(
-                        'assets/img/MotorbikeIconFill.png', // Ensure MotorbikeIconFill.png is in assets
-                        width: 24,
-                        height: 24,
-                      ),
-
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Honda Beat',
-                        style: TextStyle(fontFamily: 'Poppins', fontSize: 16),
-                      ),
-
-                      const Spacer(),
-                      const SizedBox(width: 8), // Space before the weight
-                      const Text(
-                        '600kg',
-                        style: TextStyle(fontFamily: 'Poppins', fontSize: 16),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16), // Space after header
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Image.asset(
-                        'assets/img/CarIconFill.png', // Ensure MotorbikeIconFill.png is in assets
-                        width: 24,
-                        height: 24,
-                      ),
-
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Creta',
-                        style: TextStyle(fontFamily: 'Poppins', fontSize: 16),
-                      ),
-
-                      const Spacer(),
-                      const SizedBox(width: 8), // Space before the weight
-                      const Text(
-                        '1000kg',
-                        style: TextStyle(fontFamily: 'Poppins', fontSize: 16),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16), // Space after header
+                  // Loop through vehicles to display dynamic data
+                  for (var vehicle in vehicles) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Image.asset(
+                          vehicle.vehicleType == 'Motor'
+                              ? 'assets/img/MotorbikeIconFill.png'
+                              : 'assets/img/CarIconFill.png',
+                          width: 24,
+                          height: 24,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          vehicle.vehicleName,
+                          style: const TextStyle(
+                              fontFamily: 'Poppins', fontSize: 16),
+                        ),
+                        const Spacer(),
+                        const SizedBox(width: 8), // Space before the weight
+                        Text(
+                          '${vehicle.vehicleEmission}kg',
+                          style: const TextStyle(
+                              fontFamily: 'Poppins', fontSize: 16),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16), // Space between each row
+                  ],
 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         'Tarif Pajak Karbon',
                         style: TextStyle(fontFamily: 'Poppins', fontSize: 16),
                       ),
-                      SizedBox(width: 8),
-
+                      const SizedBox(width: 8),
                       GestureDetector(
-                        // Use GestureDetector instead of IconButton
                         onTap:
                             _showWarningBottomSheet, // Call the method on tap
                         child: Image.asset(
@@ -291,52 +290,38 @@ class _CalculatorPageState extends State<CalculatorPage> {
                           height: 14,
                         ),
                       ),
-
-                      Spacer(),
-                      SizedBox(width: 8), // Space before the weight
+                      const Spacer(),
+                      const SizedBox(width: 8), // Space before the weight
                       Text(
-                        'Rp30,00',
-                        style: TextStyle(fontFamily: 'Poppins', fontSize: 16),
+                        'Rp${carbonTaxRate.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                            fontFamily: 'Poppins', fontSize: 16),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16), // Space after header
 
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Pajak Honda Beat',
-                        style: TextStyle(fontFamily: 'Poppins', fontSize: 16),
-                      ),
-
-                      Spacer(),
-                      SizedBox(width: 8), // Space before the weight
-                      Text(
-                        'Rp18000,00',
-                        style: TextStyle(fontFamily: 'Poppins', fontSize: 16),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16), // Space after header
-
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Pajak Creta',
-                        style: TextStyle(fontFamily: 'Poppins', fontSize: 16),
-                      ),
-
-                      Spacer(),
-                      SizedBox(width: 8), // Space before the weight
-                      Text(
-                        'Rp30000,00',
-                        style: TextStyle(fontFamily: 'Poppins', fontSize: 16),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16), // Space after header
+                  // Pajak per kendaraan
+                  for (var vehicle in vehicles) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Pajak ${vehicle.vehicleName}',
+                          style: const TextStyle(
+                              fontFamily: 'Poppins', fontSize: 16),
+                        ),
+                        const Spacer(),
+                        const SizedBox(width: 8), // Space before the weight
+                        Text(
+                          'Rp${(vehicle.vehicleEmission * carbonTaxRate).toStringAsFixed(2)}',
+                          style: const TextStyle(
+                              fontFamily: 'Poppins', fontSize: 16),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16), // Space after each row
+                  ],
 
                   const Row(
                     mainAxisAlignment: MainAxisAlignment.start,
@@ -349,16 +334,17 @@ class _CalculatorPageState extends State<CalculatorPage> {
                   ),
                   const SizedBox(height: 8), // Space after header
 
-                  const Row(
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Text(
-                        'Rp48.000,00',
-                        style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 24,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF66D6A6)),
+                        'Rp${calculateTotalTax().toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 24,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF66D6A6),
+                        ),
                       ),
                     ],
                   ),

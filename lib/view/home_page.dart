@@ -14,6 +14,10 @@ class _HomePageState extends State<HomePage> {
   int _selectedIndex = 2; // Default selected tab is Home
   User? user;
 
+  double carbonReportPercentage = 149.0; // Ganti dengan nilai yang sesuai
+  double totalCarbonEmitted = 8.2; // Ganti dengan nilai yang sesuai
+  double totalDistanceTraveled = 48.0; // Ganti dengan nilai yang sesuai
+
   @override
   void initState() {
     super.initState();
@@ -319,7 +323,177 @@ class _HomePageState extends State<HomePage> {
         body: SingleChildScrollView(
           child: Column(
             children: [
-              // Custom info box with border radius, image, and bottom sheet trigger
+              // Added Padding with top padding of 16
+              Padding(
+                padding:
+                    const EdgeInsets.only(top: 32.0), // Padding atas sebesar 16
+                child: Center(
+                  child: Container(
+                    width: MediaQuery.of(context).size.width *
+                        0.85, // 85% of screen width
+                    height: 215, // Adjusting height to fit 3 rows
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20.0),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF1A373B), Color(0xFF3B645E)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(
+                          16.0), // Padding inside container
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Row for first line: 'Carbon Report' and 'Daily' box
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Carbon Report',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8.0, vertical: 4.0),
+                                width: 85,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16.0),
+                                ),
+                                alignment: Alignment.center,
+                                child: const Text(
+                                  'Daily',
+                                  style: TextStyle(
+                                    color: Color(0xFF222222),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12), // Space between rows
+
+                          // Row for second line: '149%', divider image, and new result text
+                          Row(
+                            children: [
+                              Text(
+                                '${carbonReportPercentage.toInt()}%',
+                                style: TextStyle(
+                                  color: Color(0xFFD66666),
+                                  fontSize: 75,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Image.asset(
+                                'assets/img/ReportDivider.png',
+                                height: 100, // Adjust height as needed
+                              ),
+                              const SizedBox(width: 16),
+
+                              // Column to replace 'hasil' with two rows of text and images
+                              Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.start, // Align to start
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        '${totalCarbonEmitted.toString()}kg',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      const SizedBox(
+                                          width:
+                                              20), // Space between text and image
+                                      Image.asset(
+                                        'assets/img/leaf.png',
+                                        height: 14, // Adjust height as needed
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(
+                                      height: 4), // Space between rows
+                                  Row(
+                                    children: [
+                                      Text(
+                                        '${totalDistanceTraveled.toString()}km',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      const SizedBox(
+                                          width:
+                                              4), // Space between text and image
+                                      Image.asset(
+                                        'assets/img/pin_range.png',
+                                        height: 16, // Adjust height as needed
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 12), // Space between rows
+
+                          // Third line: Small note text and circles
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              const Text(
+                                '*berdasarkan Maximum Carbon Standard',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                ),
+                              ),
+
+                              const SizedBox(
+                                  width: 22), // Space between text and circles
+
+                              // Generate circles
+                              Row(
+                                children: List.generate(4, (index) {
+                                  // Determine color based on index
+                                  Color circleColor =
+                                      index == 0 ? Colors.white : Colors.grey;
+                                  return Container(
+                                    width: 10,
+                                    height: 10,
+                                    margin: const EdgeInsets.only(
+                                        right: 4), // Space between circles
+                                    decoration: BoxDecoration(
+                                      color: circleColor,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  );
+                                }),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(
+                  height:
+                      16.0), // Add some space between the container and the next widget
               // Custom info box with border radius, image, and bottom sheet trigger
               GestureDetector(
                 onTap: () =>
