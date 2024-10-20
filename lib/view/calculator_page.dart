@@ -21,15 +21,41 @@ class _CalculatorPageState extends State<CalculatorPage> {
 
   double carbonTaxRate = 30; // Tarif pajak karbon per kilogram CO2e
 
-  // Data kendaraan dummy
-  List<Vehicle> vehicles = [
-    Vehicle(
-        vehicleType: 'Motor', vehicleName: 'Honda Beat', vehicleEmission: 600),
-    Vehicle(
-        vehicleType: 'Mobil',
-        vehicleName: 'Toyota Creta',
-        vehicleEmission: 1000),
-  ];
+  Map<int, List<Vehicle>> vehicleDataByYear = {
+    2023: [
+      Vehicle(
+          vehicleType: 'Motor',
+          vehicleName: 'Honda Beat',
+          vehicleEmission: 600),
+      Vehicle(
+          vehicleType: 'Mobil',
+          vehicleName: 'Toyota Creta',
+          vehicleEmission: 1000),
+    ],
+    2024: [
+      Vehicle(
+          vehicleType: 'Motor',
+          vehicleName: 'Yamaha NMAX',
+          vehicleEmission: 500),
+      Vehicle(
+          vehicleType: 'Mobil',
+          vehicleName: 'Daihatsu Ayla',
+          vehicleEmission: 800),
+      Vehicle(
+          vehicleType: 'Mobil', vehicleName: 'Wuling', vehicleEmission: 400),
+    ],
+    // Future data for 2025 with no data
+    2025: [],
+  };
+
+  // Initial vehicles based on the current year
+  List<Vehicle> vehicles = [];
+
+  @override
+  void initState() {
+    super.initState();
+    vehicles = vehicleDataByYear[currentYear] ?? [];
+  }
 
   double calculateTotalTax() {
     double totalTax = 0;
@@ -42,12 +68,16 @@ class _CalculatorPageState extends State<CalculatorPage> {
   void incrementYear() {
     setState(() {
       currentYear++;
+      // Update vehicles based on the new year
+      vehicles = vehicleDataByYear[currentYear] ?? [];
     });
   }
 
   void decrementYear() {
     setState(() {
       currentYear--;
+      // Update vehicles based on the new year
+      vehicles = vehicleDataByYear[currentYear] ?? [];
     });
   }
 
@@ -143,9 +173,10 @@ class _CalculatorPageState extends State<CalculatorPage> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
             // First box: Year with arrows on left and right
+            const SizedBox(height: 8),
             Center(
               child: Container(
                 width: width, // Using 85% of the screen width
@@ -208,7 +239,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
               padding: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(8.0),
+                borderRadius: BorderRadius.circular(20.0),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.1),
@@ -217,138 +248,152 @@ class _CalculatorPageState extends State<CalculatorPage> {
                   ),
                 ],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Header row for first and second columns
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      // Text "Penghitungan Pajak"
-                      const Text(
-                        'Penghitungan Pajak',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Spacer(),
-                      // Leaf icon
-                      Image.asset(
-                        'assets/img/Leaf_fill.png', // Make sure Leaf_fill.png is in assets
-                        width: 24,
-                        height: 24,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16), // Space after header
-
-                  // Loop through vehicles to display dynamic data
-                  for (var vehicle in vehicles) ...[
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Header row for first and second columns
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
+                        const Text(
+                          'Penghitungan Pajak',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const Spacer(),
                         Image.asset(
-                          vehicle.vehicleType == 'Motor'
-                              ? 'assets/img/MotorbikeIconFill.png'
-                              : 'assets/img/CarIconFill.png',
+                          'assets/img/Leaf_fill.png',
                           width: 24,
                           height: 24,
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          vehicle.vehicleName,
-                          style: const TextStyle(
-                              fontFamily: 'Poppins', fontSize: 16),
-                        ),
-                        const Spacer(),
-                        const SizedBox(width: 8), // Space before the weight
-                        Text(
-                          '${vehicle.vehicleEmission}kg',
-                          style: const TextStyle(
-                              fontFamily: 'Poppins', fontSize: 16),
-                        ),
                       ],
                     ),
-                    const SizedBox(height: 16), // Space between each row
-                  ],
+                    const SizedBox(height: 16),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Tarif Pajak Karbon',
-                        style: TextStyle(fontFamily: 'Poppins', fontSize: 16),
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap:
-                            _showWarningBottomSheet, // Call the method on tap
-                        child: Image.asset(
-                          'assets/img/informationIcon.png', // Ensure the image is in the assets
-                          width: 14,
-                          height: 14,
+                    if (vehicles.isEmpty)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.only(top: 112.0),
+                          child: Text(
+                            'Belum ada data untuk tahun ini.',
+                            style: TextStyle(fontSize: 16),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
-                      ),
-                      const Spacer(),
-                      const SizedBox(width: 8), // Space before the weight
-                      Text(
-                        'Rp${carbonTaxRate.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                            fontFamily: 'Poppins', fontSize: 16),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16), // Space after header
-
-                  // Pajak per kendaraan
-                  for (var vehicle in vehicles) ...[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Pajak ${vehicle.vehicleName}',
-                          style: const TextStyle(
-                              fontFamily: 'Poppins', fontSize: 16),
+                      )
+                    else ...[
+                      // Loop through vehicles to display dynamic data
+                      for (var vehicle in vehicles) ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Image.asset(
+                              vehicle.vehicleType == 'Motor'
+                                  ? 'assets/img/MotorbikeIconFill.png'
+                                  : 'assets/img/CarIconFill.png',
+                              width: 24,
+                              height: 24,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              vehicle.vehicleName,
+                              style: const TextStyle(
+                                  fontFamily: 'Poppins', fontSize: 16),
+                            ),
+                            const Spacer(),
+                            const SizedBox(width: 8),
+                            Text(
+                              '${vehicle.vehicleEmission}kg',
+                              style: const TextStyle(
+                                  fontFamily: 'Poppins', fontSize: 16),
+                            ),
+                          ],
                         ),
-                        const Spacer(),
-                        const SizedBox(width: 8), // Space before the weight
-                        Text(
-                          'Rp${(vehicle.vehicleEmission * carbonTaxRate).toStringAsFixed(2)}',
-                          style: const TextStyle(
-                              fontFamily: 'Poppins', fontSize: 16),
-                        ),
+                        const SizedBox(height: 16),
                       ],
-                    ),
-                    const SizedBox(height: 16), // Space after each row
-                  ],
 
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Total',
-                        style: TextStyle(fontFamily: 'Poppins', fontSize: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Tarif Pajak Karbon',
+                            style:
+                                TextStyle(fontFamily: 'Poppins', fontSize: 16),
+                          ),
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: _showWarningBottomSheet,
+                            child: Image.asset(
+                              'assets/img/informationIcon.png',
+                              width: 14,
+                              height: 14,
+                            ),
+                          ),
+                          const Spacer(),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Rp${carbonTaxRate.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                                fontFamily: 'Poppins', fontSize: 16),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 8), // Space after header
+                      const SizedBox(height: 16),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Rp${calculateTotalTax().toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 24,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF66D6A6),
+                      // Pajak per kendaraan
+                      for (var vehicle in vehicles) ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Pajak ${vehicle.vehicleName}',
+                              style: const TextStyle(
+                                  fontFamily: 'Poppins', fontSize: 16),
+                            ),
+                            const Spacer(),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Rp${(vehicle.vehicleEmission * carbonTaxRate).toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                  fontFamily: 'Poppins', fontSize: 16),
+                            ),
+                          ],
                         ),
+                        const SizedBox(height: 16),
+                      ],
+
+                      const Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Total',
+                            style:
+                                TextStyle(fontFamily: 'Poppins', fontSize: 16),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Rp${calculateTotalTax().toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 24,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF66D6A6),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
 
