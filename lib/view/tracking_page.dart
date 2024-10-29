@@ -3,6 +3,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:karbonku/view/custom_bottom_nav.dart';
 import '../middleware/auth_middleware.dart';
 import 'dart:math';
@@ -22,18 +23,25 @@ class _TrackingPageState extends State<TrackingPage> {
   List<LatLng> _routePoints = [];
   PolylinePoints polylinePoints = PolylinePoints();
   Set<Polyline> _polylines = {};
-  bool _isTracking = false; // Tracking state
-  bool _isMapReady = false; // Map readiness state
+  bool _isTracking = false;
+  bool _isShowTrackingInfo = false;
+  bool _isMapReady = false;
   int _selectedIndex = 0;
   User? user;
-  LatLng? _initialPosition; // To store the initial user location
-  double _totalDistance = 0.0; // Variable to store the total distance traveled
+  LatLng? _initialPosition;
+  double _totalDistance = 0.0;
+
+  List<Map<String, dynamic>> _vehicles = [];
+  bool _isLoadingVehicles = true;
+  String? _selectedVehicleId;
+  String? _lastVehicleId;
 
   @override
   void initState() {
     super.initState();
     user = FirebaseAuth.instance.currentUser;
     _checkAndRequestPermissions();
+    _fetchVehicles();
   }
 
   Future<void> _checkAndRequestPermissions() async {
@@ -98,6 +106,7 @@ class _TrackingPageState extends State<TrackingPage> {
         if (_isTracking) {
           _routePoints.add(currentLatLng);
           _updatePolyline();
+          _updateTotalDistance(currentLatLng);
         }
       });
     });
@@ -138,6 +147,14 @@ class _TrackingPageState extends State<TrackingPage> {
     });
   }
 
+  void _goToMyLocation() {
+    if (_mapController != null && _initialPosition != null) {
+      _mapController!.animateCamera(
+        CameraUpdate.newLatLng(_initialPosition!),
+      );
+    }
+  }
+
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -174,11 +191,13 @@ class _TrackingPageState extends State<TrackingPage> {
 
   void _toggleTracking() {
     setState(() {
+      _isShowTrackingInfo = true;
       _isTracking = !_isTracking;
       if (!_isTracking) {
         _calculateDistanceTraveled();
       } else {
-        _routePoints.clear(); // Clear the points when starting new tracking
+        _lastVehicleId = _selectedVehicleId;
+        _routePoints.clear();
         _polylines.clear();
         _totalDistance = 0.0;
       }
@@ -209,11 +228,284 @@ class _TrackingPageState extends State<TrackingPage> {
             cos(_degreesToRadians(point2.latitude)) *
             (sin(dLon / 2) * sin(dLon / 2));
     double c = 2 * atan2(sqrt(a), sqrt(1 - a));
-    return earthRadius * c; // Distance in meters
+    return earthRadius * c;
   }
 
   double _degreesToRadians(double degrees) {
     return degrees * (pi / 180);
+  }
+
+  Future<void> _fetchVehicles() async {
+    try {
+      final FirebaseFirestore firestore = FirebaseFirestore.instance;
+      final FirebaseAuth auth = FirebaseAuth.instance;
+
+      QuerySnapshot snapshot = await firestore
+          .collection('vehicles')
+          .where('userId', isEqualTo: auth.currentUser!.uid)
+          .get();
+
+      setState(() {
+        _vehicles = snapshot.docs.map((doc) {
+          String iconPath;
+          if (doc['vehicleType'] == 'motor') {
+            iconPath = 'assets/img/motorcycle_icon.png';
+          } else {
+            iconPath = 'assets/img/car_icon.png';
+          }
+
+          return {
+            "id": doc.id,
+            "name": doc['vehicleName'],
+            "icon": iconPath,
+          };
+        }).toList();
+        _isLoadingVehicles = false; // Set loading to false once data is fetched
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingVehicles = false; // Handle the error by stopping the loading spinner
+      });
+      print('Error fetching vehicles: $e');
+    }
+  }
+
+  Widget _buildVehicleList(BuildContext context) {
+    if (_isLoadingVehicles) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_vehicles.isEmpty) {
+      return const Center(child: Text('No vehicles found'));
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: _vehicles.map((vehicle) {
+          bool isSelected = _selectedVehicleId == vehicle["id"];
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Column(
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _isTracking ? const Color(0xFF6C7072) : (isSelected ? const Color(0xFF66D6A6) : const Color(0xFF1A373B)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        spreadRadius: 2,
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    icon: Image.asset(
+                      vehicle["icon"]!,
+                      width: 25,
+                    ),
+                    iconSize: 25,
+                    onPressed:
+                    _isTracking ? null : () {
+                      setState(() {
+                        _selectedVehicleId = vehicle["id"];
+                        print(_selectedVehicleId);
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: 50,
+                  child: Text(
+                    vehicle["name"]!,
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 10,
+                    ),
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildTrackingInfo() {
+    // Get the logo path for the selected vehicle
+    final vehicle = _vehicles.firstWhere(
+      (v) => v['id'] == _lastVehicleId
+    );
+    final logoPath = vehicle['icon'] ?? '';
+
+    return Align(
+      alignment: Alignment.topCenter,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 50.0),
+        child: Stack(
+          alignment: Alignment.topCenter,
+          clipBehavior: Clip.none,
+          children: [
+            FractionallySizedBox(
+              widthFactor: 0.9,
+              child: IntrinsicHeight(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF1A373B), Color(0xFF3B645E)],
+                      begin: Alignment.center,
+                      end: Alignment.bottomCenter,
+                    ),
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center, // Center-aligns the columns horizontally
+                    children: [
+                      // Left Column: Carbon Emission
+                      Expanded(
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min, // Centers content vertically in each column
+                            children: [
+                              const Text(
+                                'XX', // Display XX for carbon emission
+                                style: TextStyle(fontSize: 80, color: Color(0xFF66D6A6)),
+                              ),
+                              Row(
+                                mainAxisSize: MainAxisSize.min, // Only occupy as much space as needed
+                                crossAxisAlignment: CrossAxisAlignment.center, // Aligns the image and text vertically
+                                children: [
+                                  Image.asset(
+                                    'assets/img/leaf.png',
+                                    width: 14.0, // Adjust size as needed
+                                    height: 14.0,
+                                  ),
+                                  const SizedBox(width: 4.0), // Space between text and image
+                                  const Text(
+                                    'kg diproduksi',
+                                    style: TextStyle(fontSize: 12, color: Colors.white),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const VerticalDivider(
+                        color: Colors.white,
+                        thickness: 1.25,
+                        width: 64,
+                        indent: 70,
+                      ),
+                      // Right Column: Distance
+                      Expanded(
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                (_totalDistance < 10000) ? (_totalDistance / 1000).toStringAsFixed(1) : (_totalDistance / 1000).toStringAsFixed(0), // Convert meters to kilometers
+                                style: const TextStyle(fontSize: 80, color: Color(0xFF66D6A6)),
+                              ),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Image.asset(
+                                    'assets/img/pin_range.png',
+                                    width: 14.0,
+                                    height: 14.0,
+                                  ),
+                                  const SizedBox(width: 4.0),
+                                  const Text(
+                                    'km ditempuh',
+                                    style: TextStyle(fontSize: 12, color: Colors.white),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // Circular Badge for Vehicle Logo
+            Positioned(
+              top: -40,
+              child: Column(
+                children: [
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 6.0,
+                          spreadRadius: 1.0,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(3.0),
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Color(0xFF1A373B),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: logoPath.isNotEmpty
+                          ? Image.asset(
+                            logoPath,
+                            fit: BoxFit.contain,
+                          )
+                          : const Icon(
+                            Icons.error,
+                            size: 30,
+                            color: Colors.white, // Icon color to match background
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8.0), // Spacing between icon and text
+                  SizedBox(
+                      width: 80,
+                      child: Text(
+                        vehicle["name"]!,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.white
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        // overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -221,6 +513,14 @@ class _TrackingPageState extends State<TrackingPage> {
     AuthMiddleware.checkAuthentication(context);
 
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF3B645E),
+        elevation: 0,
+        title: const Text(
+          'Tracking',
+          style: TextStyle(color: Colors.white),
+        ),
+      ),
       body: _isMapReady
           ? Stack(
               children: [
@@ -231,7 +531,8 @@ class _TrackingPageState extends State<TrackingPage> {
                   ),
                   mapType: MapType.terrain,
                   myLocationEnabled: true,
-                  myLocationButtonEnabled: true,
+                  myLocationButtonEnabled: false,
+                  zoomControlsEnabled: false,
                   onMapCreated: (GoogleMapController controller) {
                     _mapController = controller;
                     if (_initialPosition != null) {
@@ -242,29 +543,64 @@ class _TrackingPageState extends State<TrackingPage> {
                   },
                   polylines: _polylines,
                 ),
+                if (_isShowTrackingInfo) _buildTrackingInfo(),
                 Positioned(
-                  top: 20.0, // Position the distance text
-                  left: MediaQuery.of(context).size.width * 0.5 - 60,
-                  child: Text(
-                    'Distance: ${_totalDistance.toStringAsFixed(2)} m', // Display total distance
-                    style: TextStyle(fontSize: 18, color: Colors.black),
+                  bottom: 200,
+                  right: 32,
+                  child: FloatingActionButton(
+                    onPressed: _goToMyLocation,
+                    backgroundColor: Colors.white,
+                    shape: const CircleBorder(),
+                    child: const Icon(
+                      Icons.my_location,
+                      color: Colors.black,
+                    ),
                   ),
                 ),
                 Positioned(
-                  bottom: 80.0,
-                  left: MediaQuery.of(context).size.width * 0.5 - 60,
-                  child: ElevatedButton(
-                    onPressed: _toggleTracking,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _isTracking ? Colors.red : Colors.green,
+                  bottom: 48,
+                  left: 32,
+                  right: 32,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16), // Rounded edges
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          spreadRadius: 2,
+                          blurRadius: 6,
+                          offset: Offset(0, 3), // Shadow position
+                        ),
+                      ],
                     ),
-                    child: Text(_isTracking ? 'Stop Tracking' : 'Start Tracking'),
+                    padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: _buildVehicleList(context),
+                        ),
+                        const SizedBox(width: 16.0), // Spacing between list and button
+                        ElevatedButton(
+                          onPressed: _selectedVehicleId == null ? null : _toggleTracking, // Disable button if no vehicle is selected
+                          style: ElevatedButton.styleFrom(
+                            fixedSize: const Size(108.0, 0.0),
+                            backgroundColor: _selectedVehicleId == null ? Colors.grey : (_isTracking ? const Color(0xFFD66666) : const Color(0xFF66D6A6)),
+                          ),
+                          child: Text(
+                            _isTracking ? 'Berhenti' : 'Mulai',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
             )
           : const Center(
-              child: CircularProgressIndicator(), // Show spinner while loading location
+              child: CircularProgressIndicator(),
             ),
       bottomNavigationBar: CustomBottomNavBar(
         selectedIndex: _selectedIndex,
