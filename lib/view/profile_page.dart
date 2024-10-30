@@ -6,10 +6,6 @@ import '../middleware/auth_middleware.dart';
 import 'add_vehicle_form.dart';
 import 'view_vehicle_detail.dart';
 import 'edit_profile.dart';
-import 'home_page.dart';
-import 'education_page.dart';
-import 'tracking_page.dart';
-import 'calculator_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final User user;
