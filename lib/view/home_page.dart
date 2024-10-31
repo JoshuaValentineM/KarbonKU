@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:karbonku/model/Vehicle.dart';
 import 'package:karbonku/view/custom_bottom_nav.dart';
 import '../middleware/auth_middleware.dart';
 import 'carbon_report_view.dart';
@@ -22,6 +23,24 @@ class _HomePageState extends State<HomePage> {
   double carbonReportPercentage = 149.0; // Ganti dengan nilai yang sesuai
   double totalCarbonEmitted = 8.2; // Ganti dengan nilai yang sesuai
   double totalDistanceTraveled = 48.0; // Ganti dengan nilai yang sesuai
+
+  List<Vehicle> vehicles = [
+    Vehicle(
+        vehicleType: 'Motor',
+        vehicleName: 'Honda Beat',
+        vehicleEmission: 3,
+        vehicleTravel: 20),
+    Vehicle(
+        vehicleType: 'Mobil',
+        vehicleName: 'Creta',
+        vehicleEmission: 5,
+        vehicleTravel: 24),
+    Vehicle(
+        vehicleType: 'Mobil',
+        vehicleName: 'Inova',
+        vehicleEmission: 3,
+        vehicleTravel: 54),
+  ];
 
   List<String> cityList = [];
   String? selectedCity;
@@ -538,6 +557,110 @@ class _HomePageState extends State<HomePage> {
                     currentPage: 3,
                   ),
                 ],
+              ),
+            ),
+            const SizedBox(height: 32),
+            Container(
+              width: MediaQuery.of(context).size.width * 0.85,
+              height: 186,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20.0),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8.0,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(
+                      16.0), // Padding untuk seluruh konten
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Header row for first and second columns
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Hari ini',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const Spacer(),
+                          Image.asset(
+                            'assets/img/pin_fill.png',
+                            width: 24,
+                            height: 24,
+                          ),
+                          const SizedBox(width: 52),
+                          Image.asset(
+                            'assets/img/daun.png',
+                            width: 24,
+                            height: 24,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      if (vehicles.isEmpty)
+                        const Center(
+                          child: Padding(
+                            padding: EdgeInsets.only(top: 112.0),
+                            child: Text(
+                              'Belum ada data.',
+                              style: TextStyle(fontSize: 16),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        )
+                      else ...[
+                        // Loop through vehicles to display dynamic data
+                        for (var vehicle in vehicles) ...[
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Image.asset(
+                                vehicle.vehicleType == 'Motor'
+                                    ? 'assets/img/MotorbikeIconFill.png'
+                                    : 'assets/img/CarIconFill.png',
+                                width: 24,
+                                height: 24,
+                              ),
+                              const SizedBox(width: 16),
+                              Text(
+                                vehicle.vehicleName,
+                                style: const TextStyle(
+                                    fontFamily: 'Poppins', fontSize: 16),
+                              ),
+                              const Spacer(),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${vehicle.vehicleTravel}km',
+                                style: const TextStyle(
+                                    fontFamily: 'Poppins', fontSize: 16),
+                              ),
+                              const SizedBox(width: 42),
+                              Text(
+                                '${vehicle.vehicleEmission}kg',
+                                style: const TextStyle(
+                                    fontFamily: 'Poppins', fontSize: 16),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                        const SizedBox(height: 16),
+                        const SizedBox(height: 8),
+                      ],
+                    ],
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 32), // Jarak antar widget yang lebih besar
