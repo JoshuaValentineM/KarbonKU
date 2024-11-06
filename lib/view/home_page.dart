@@ -6,6 +6,7 @@ import '../middleware/auth_middleware.dart';
 import 'carbon_report_view.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -122,6 +123,10 @@ class _HomePageState extends State<HomePage> {
             return {
               'name': doc['name'],
               'address': doc['address'],
+              'latitude':
+                  workshopLatitude.toString(), // Ensure latitude is included
+              'longitude':
+                  workshopLongitude.toString(), // Ensure longitude is included
               'distance': distance / 1000,
               'openTime': doc['openTime'],
               'closeTime': doc['closeTime'],
@@ -130,6 +135,8 @@ class _HomePageState extends State<HomePage> {
             return {
               'name': doc['name'],
               'address': doc['address'],
+              'latitude': null,
+              'longitude': null,
               'distance': 0.0,
               'openTime': doc['openTime'],
               'closeTime': doc['closeTime'],
@@ -357,6 +364,13 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  late GoogleMapController mapController;
+
+  // Function to set the map controller once the map is created
+  void _onMapCreated(GoogleMapController controller) {
+    mapController = controller;
+  }
+
   void _showEmissionTestPopup(BuildContext context) {
     showDialog(
       context: context,
@@ -364,18 +378,40 @@ class _HomePageState extends State<HomePage> {
         return StatefulBuilder(
           builder: (context, setState) {
             void updateWorkshops(String city) async {
-              // Set loading state to true before fetching workshops
-              setState(() {
-                isLoading = true;
-              });
+              try {
+                setState(() {
+                  isLoading = true;
+                });
 
-              await fetchWorkshops(city); // Call fetchWorkshops directly
+                await fetchWorkshops(city);
+                print("emissionLocations: $emissionLocations");
+                // Move the camera to the first workshop location if available
+                if (emissionLocations.isNotEmpty) {
+                  double? lat =
+                      double.tryParse(emissionLocations[0]['latitude'] ?? '');
+                  double? lng =
+                      double.tryParse(emissionLocations[0]['longitude'] ?? '');
 
-              // After fetching, set loading to false again
-              setState(() {
-                isLoading = false;
-              });
+                  if (lat != null && lng != null) {
+                    mapController.animateCamera(
+                      CameraUpdate.newLatLng(LatLng(lat, lng)),
+                    );
+                  }
+                }
+
+                setState(() {
+                  isLoading = false;
+                });
+              } catch (error) {
+                setState(() {
+                  isLoading = false;
+                });
+                print("Error fetching workshops: $error");
+              }
             }
+
+            // Set initial location for the map
+            LatLng initialLocation = LatLng(-6.200000, 106.816666);
 
             return Dialog(
               shape: RoundedRectangleBorder(
@@ -387,10 +423,49 @@ class _HomePageState extends State<HomePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Center(
-                      child: Image.asset(
-                        'assets/img/maps.png',
+                      child: Container(
                         height: 150,
-                        fit: BoxFit.cover,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              offset: Offset(0, 4),
+                              blurRadius: 6,
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: GoogleMap(
+                            initialCameraPosition: CameraPosition(
+                              target: initialLocation,
+                              zoom: 11,
+                            ),
+                            onMapCreated: _onMapCreated,
+                            markers: emissionLocations
+                                .where((location) =>
+                                    location['latitude'] != null &&
+                                    location['longitude'] != null)
+                                .map((location) {
+                              double? lat =
+                                  double.tryParse(location['latitude'] ?? '');
+                              double? lng =
+                                  double.tryParse(location['longitude'] ?? '');
+                              if (lat != null && lng != null) {
+                                return Marker(
+                                  markerId: MarkerId(location['name']),
+                                  position: LatLng(lat, lng),
+                                  infoWindow: InfoWindow(
+                                    title: location['name'],
+                                    snippet: location['address'],
+                                  ),
+                                );
+                              }
+                              return Marker(markerId: MarkerId('null'));
+                            }).toSet(),
+                          ),
+                        ),
                       ),
                     ),
                     SizedBox(height: 16),
@@ -422,8 +497,7 @@ class _HomePageState extends State<HomePage> {
                             setState(() {
                               selectedCity = newValue;
                             });
-                            updateWorkshops(
-                                selectedCity!); // Call to update workshops
+                            updateWorkshops(selectedCity!);
                           }
                         },
                         isExpanded: true,
@@ -440,7 +514,6 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     SizedBox(height: 16),
-                    // Show loading spinner if isLoading is true
                     if (isLoading)
                       Center(child: CircularProgressIndicator())
                     else
@@ -471,9 +544,6 @@ class _HomePageState extends State<HomePage> {
                                               as String,
                                         ),
                                         Text(
-                                          "${emissionLocations[index]['distance'].toStringAsFixed(2)} km", // Format distance to two decimal places
-                                        ),
-                                        Text(
                                           "Open ${emissionLocations[index]['openTime']} - ${emissionLocations[index]['closeTime']} everyday",
                                         ),
                                       ],
@@ -482,7 +552,7 @@ class _HomePageState extends State<HomePage> {
                                   Expanded(
                                     flex: 4,
                                     child: Text(
-                                      "${emissionLocations[index]['distance'].toStringAsFixed(2)} km", // Format distance to two decimal places
+                                      "${emissionLocations[index]['distance'].toStringAsFixed(2)} km",
                                       textAlign: TextAlign.right,
                                       style: TextStyle(
                                         color: Colors.grey[700],
