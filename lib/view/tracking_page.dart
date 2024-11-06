@@ -240,9 +240,9 @@ class _TrackingPageState extends State<TrackingPage> {
         'tracks': FieldValue.arrayUnion([trackingData]),
       });
       
-      print('Tracking data updated successfully.');
+      _showSnackBar('Tracking data updated successfully.');
     } catch (e) {
-      print('Failed to update tracking data: $e');
+      _showSnackBar('Failed to update tracking data: $e');
     }
   }
 
