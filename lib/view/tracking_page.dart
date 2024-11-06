@@ -29,7 +29,9 @@ class _TrackingPageState extends State<TrackingPage> {
   int _selectedIndex = 0;
   User? user;
   LatLng? _initialPosition;
+
   double _totalDistance = 0.0;
+  double _totalEmission = 0.0;
 
   List<Map<String, dynamic>> _vehicles = [];
   bool _isLoadingVehicles = true;
@@ -172,6 +174,10 @@ class _TrackingPageState extends State<TrackingPage> {
       );
       setState(() {
         _totalDistance += distance;
+        final vehicle = _vehicles.firstWhere(
+          (v) => v['id'] == _lastVehicleId
+        );
+        _totalEmission += distance * vehicle['emission'];
       });
     }
   }
@@ -200,6 +206,7 @@ class _TrackingPageState extends State<TrackingPage> {
         _routePoints.clear();
         _polylines.clear();
         _totalDistance = 0.0;
+        _totalEmission = 0.0;
       }
     });
   }
@@ -214,8 +221,29 @@ class _TrackingPageState extends State<TrackingPage> {
     }
     setState(() {
       _totalDistance = distance;
+      final vehicle = _vehicles.firstWhere(
+        (v) => v['id'] == _lastVehicleId
+      );
+      _totalEmission = distance * vehicle['emission'];
     });
-    print('Total Distance Traveled: ${distance.toStringAsFixed(2)} meters');
+    print('Total Distance Traveled: ${_totalDistance.toStringAsFixed(2)} meters');
+    print('Total Emission Produced: ${_totalEmission.toStringAsFixed(2)} grams');
+
+    final trackingData = {
+      'distance': _totalDistance,
+      'carbon_emission': _totalEmission,
+      'date': DateTime.now(),
+    };
+
+    try {
+      FirebaseFirestore.instance.collection('vehicles').doc(_lastVehicleId).update({
+        'tracks': FieldValue.arrayUnion([trackingData]),
+      });
+      
+      _showSnackBar('Tracking data updated successfully.');
+    } catch (e) {
+      _showSnackBar('Failed to update tracking data: $e');
+    }
   }
 
   double _calculateDistanceBetweenPoints(LatLng point1, LatLng point2) {
@@ -248,15 +276,22 @@ class _TrackingPageState extends State<TrackingPage> {
       setState(() {
         _vehicles = snapshot.docs.map((doc) {
           String iconPath;
+          double emission;
           if (doc['vehicleType'] == 'motor') {
             iconPath = 'assets/img/motorcycle_icon.png';
+            emission = 0.153;
+          } else if (doc['vehicleType'] == 'mobil' && doc['fuelType'] == 'Diesel'){
+            iconPath = 'assets/img/car_icon.png';
+            emission = 0.265;
           } else {
             iconPath = 'assets/img/car_icon.png';
+            emission = 0.229;
           }
 
           return {
             "id": doc.id,
             "name": doc['vehicleName'],
+            "emission": emission,
             "icon": iconPath,
           };
         }).toList();
@@ -377,20 +412,20 @@ class _TrackingPageState extends State<TrackingPage> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min, // Centers content vertically in each column
                             children: [
-                              const Text(
-                                'XX', // Display XX for carbon emission
-                                style: TextStyle(fontSize: 80, color: Color(0xFF66D6A6)),
+                              Text(
+                                (_totalEmission < 10000) ? (_totalEmission / 1000).toStringAsFixed(1) : (_totalEmission / 1000).toStringAsFixed(0), 
+                                style: const TextStyle(fontSize: 80, color: Color(0xFF66D6A6)),
                               ),
                               Row(
-                                mainAxisSize: MainAxisSize.min, // Only occupy as much space as needed
-                                crossAxisAlignment: CrossAxisAlignment.center, // Aligns the image and text vertically
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   Image.asset(
                                     'assets/img/leaf.png',
-                                    width: 14.0, // Adjust size as needed
+                                    width: 14.0,
                                     height: 14.0,
                                   ),
-                                  const SizedBox(width: 4.0), // Space between text and image
+                                  const SizedBox(width: 4.0),
                                   const Text(
                                     'kg diproduksi',
                                     style: TextStyle(fontSize: 12, color: Colors.white),
@@ -458,7 +493,7 @@ class _TrackingPageState extends State<TrackingPage> {
                           color: Colors.black.withOpacity(0.2),
                           blurRadius: 6.0,
                           spreadRadius: 1.0,
-                          offset: Offset(0, 3),
+                          offset: const Offset(0, 3),
                         ),
                       ],
                     ),
