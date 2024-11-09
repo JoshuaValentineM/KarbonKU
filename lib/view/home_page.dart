@@ -16,16 +16,161 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  @override
+  void initState() {
+    super.initState();
+    user = FirebaseAuth.instance.currentUser; // Get the current logged-in user
+    _loadVehicleData();
+    fetchCities(); // Panggil fungsi untuk mengambil kota
+  }
+
   int _selectedIndex = 2; // Default selected tab is Home
   User? user;
   bool isLoading = false;
 
   final PageController _pageController = PageController();
-  double carbonReportPercentage = 149.0; // Ganti dengan nilai yang sesuai
-  double totalCarbonEmitted = 8.2; // Ganti dengan nilai yang sesuai
-  double totalDistanceTraveled = 48.0; // Ganti dengan nilai yang sesuai
+  double carbonReportPercentageDaily = 0.0; // Ganti dengan nilai yang sesuai
+  double carbonReportPercentageWeekly = 0.0; // Ganti dengan nilai yang sesuai
+  double carbonReportPercentageMonthly = 0.0; // Ganti dengan nilai yang sesuai
+  double carbonReportPercentageYearly = 0.0; // Ganti dengan nilai yang sesuai
+  double maximumCarbonDaily = 5048;
+  double maximumCarbonWeekly = 38460;
+  double maximumCarbonMonthly = 166670;
+  double maximumCarbonYearly = 200000;
 
-  List<Vehicle> vehicles = [
+  double totalCarbonEmittedDaily = 0.0; // Ganti dengan nilai yang sesuai
+  double totalDistanceTraveledDaily = 0.0; // Ganti dengan nilai yang sesuai
+  double totalCarbonEmittedWeekly = 0.0; // Ganti dengan nilai yang sesuai
+  double totalDistanceTraveledWeekly = 0.0;
+  double totalCarbonEmittedMonthly = 0.0; // Ganti dengan nilai yang sesuai
+  double totalDistanceTraveledMonthly = 0.0;
+  double totalCarbonEmittedYearly = 0.0; // Ganti dengan nilai yang sesuai
+  double totalDistanceTraveledYearly = 0.0;
+
+  List<Map<String, dynamic>> vehicles = [];
+
+  Future<void> _loadVehicleData() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final vehiclesRef = FirebaseFirestore.instance
+          .collection('vehicles')
+          .where('userId', isEqualTo: FirebaseAuth.instance.currentUser!.uid);
+      final querySnapshot = await vehiclesRef.get();
+
+      List<Map<String, dynamic>> tempVehicles = [];
+      double dailyEmissions = 0.0;
+      double dailyDistance = 0.0;
+      double weeklyEmissions = 0.0;
+      double weeklyDistance = 0.0;
+      double monthlyEmissions = 0.0;
+      double monthlyDistance = 0.0;
+      double yearlyEmissions = 0.0;
+      double yearlyDistance = 0.0;
+
+      DateTime now = DateTime.now();
+      DateTime today = DateTime(now.year, now.month, now.day);
+      DateTime oneWeekAgo = today.subtract(Duration(days: 7));
+      DateTime oneMonthAgo = DateTime(now.year, now.month - 1, now.day);
+      DateTime oneYearAgo = DateTime(now.year - 1, now.month, now.day);
+
+      for (var doc in querySnapshot.docs) {
+        var vehicleData = doc.data() as Map<String, dynamic>;
+        print("Data Kendaraan: $vehicleData");
+
+        if (vehicleData.containsKey('tracks')) {
+          var tracks = vehicleData['tracks'] as List<dynamic>;
+
+          for (var track in tracks) {
+            DateTime? trackDate;
+
+            if (track['date'] is Timestamp) {
+              trackDate = (track['date'] as Timestamp).toDate();
+            } else if (track['date'] is String) {
+              trackDate = DateTime.tryParse(track['date']);
+            }
+
+            if (trackDate != null) {
+              double carbon = track['carbon_emission'] ?? 0.0;
+              double distance = track['distance'] ?? 0.0;
+
+              if (!trackDate.isBefore(today)) {
+                // Hitung juga yang terjadi hari ini
+                dailyEmissions += carbon;
+                dailyDistance += distance;
+              }
+              if (!trackDate.isBefore(oneWeekAgo)) {
+                // Hitung juga yang terjadi minggu ini
+                weeklyEmissions += carbon;
+                weeklyDistance += distance;
+              }
+              if (!trackDate.isBefore(oneMonthAgo)) {
+                // Hitung juga yang terjadi bulan ini
+                monthlyEmissions += carbon;
+                monthlyDistance += distance;
+              }
+              if (!trackDate.isBefore(oneYearAgo)) {
+                // Hitung juga yang terjadi tahun ini
+                yearlyEmissions += carbon;
+                yearlyDistance += distance;
+              }
+
+              print(
+                  "Track Date: $trackDate, Carbon: $carbon, Distance: $distance");
+            }
+          }
+
+          tempVehicles.add({
+            'vehicleName': vehicleData['vehicleName'],
+            'vehicleType': vehicleData['vehicleType'],
+            'tracks': tracks,
+          });
+        } else {
+          print("Tidak ada 'tracks' dalam dokumen ${doc.id}");
+        }
+      }
+
+      setState(() {
+        vehicles = tempVehicles;
+        totalCarbonEmittedDaily = dailyEmissions;
+        totalDistanceTraveledDaily = dailyDistance;
+        totalCarbonEmittedWeekly = weeklyEmissions;
+        totalDistanceTraveledWeekly = weeklyDistance;
+        totalCarbonEmittedMonthly = monthlyEmissions;
+        totalDistanceTraveledMonthly = monthlyDistance;
+        totalCarbonEmittedYearly = yearlyEmissions;
+        totalDistanceTraveledYearly = yearlyDistance;
+
+        // Kalkulasi persentase emisi tanpa pembagian 1000
+        carbonReportPercentageDaily =
+            (dailyEmissions / maximumCarbonDaily) * 100;
+        carbonReportPercentageWeekly =
+            (weeklyEmissions / maximumCarbonWeekly) * 100;
+        carbonReportPercentageMonthly =
+            (monthlyEmissions / maximumCarbonMonthly) * 100;
+        carbonReportPercentageYearly =
+            (yearlyEmissions / maximumCarbonYearly) * 100;
+
+        isLoading = false;
+      });
+
+      print("Emisi Harian: $dailyEmissions, Jarak Harian: $dailyDistance");
+      print(
+          "Emisi Mingguan: $weeklyEmissions, Jarak Mingguan: $weeklyDistance");
+      print(
+          "Emisi Bulanan: $monthlyEmissions, Jarak Bulanan: $monthlyDistance");
+      print("Emisi Tahunan: $yearlyEmissions, Jarak Tahunan: $yearlyDistance");
+    } catch (e) {
+      print("Error loading vehicle data: $e");
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  List<Vehicle> vehiclesReport = [
     Vehicle(
         vehicleType: 'Motor',
         vehicleName: 'Honda Beat',
@@ -46,13 +191,6 @@ class _HomePageState extends State<HomePage> {
   List<String> cityList = [];
   String? selectedCity;
   List<Map<String, dynamic>> emissionLocations = [];
-
-  @override
-  void initState() {
-    super.initState();
-    user = FirebaseAuth.instance.currentUser; // Get the current logged-in user
-    fetchCities(); // Panggil fungsi untuk mengambil kota
-  }
 
   Future<Position> _getUserLocation() async {
     LocationPermission permission = await Geolocator.checkPermission();
@@ -589,305 +727,327 @@ class _HomePageState extends State<HomePage> {
           style: TextStyle(color: Colors.white),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 32), // Jarak lebih besar di bagian atas
-            SizedBox(
-              height: 225, // Atur tinggi untuk PageView
-              child: PageView(
-                controller: _pageController,
+      body: isLoading
+          ? Center(
+              child:
+                  CircularProgressIndicator(), // Menampilkan loading indicator saat isLoading = true
+            )
+          : SingleChildScrollView(
+              child: Column(
                 children: [
-                  CarbonReportView(
-                    carbonReportPercentage: carbonReportPercentage,
-                    totalCarbonEmitted: totalCarbonEmitted,
-                    totalDistanceTraveled: totalDistanceTraveled,
-                    reportType: 'Daily',
-                    currentPage: 0,
-                  ),
-                  CarbonReportView(
-                    carbonReportPercentage: carbonReportPercentage - 10,
-                    totalCarbonEmitted: totalCarbonEmitted * 2,
-                    totalDistanceTraveled: totalDistanceTraveled * 3,
-                    reportType: 'Weekly',
-                    currentPage: 1,
-                  ),
-                  CarbonReportView(
-                    carbonReportPercentage: carbonReportPercentage - 40,
-                    totalCarbonEmitted: totalCarbonEmitted * 2,
-                    totalDistanceTraveled: totalDistanceTraveled * 3,
-                    reportType: 'Monthly',
-                    currentPage: 2,
-                  ),
-                  CarbonReportView(
-                    carbonReportPercentage: carbonReportPercentage - 60,
-                    totalCarbonEmitted: totalCarbonEmitted * 2,
-                    totalDistanceTraveled: totalDistanceTraveled * 3,
-                    reportType: 'Yearly',
-                    currentPage: 3,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-            Container(
-              width: MediaQuery.of(context).size.width * 0.85,
-              height: 186,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20.0),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 8.0,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(
-                      16.0), // Padding untuk seluruh konten
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Header row for first and second columns
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Hari ini',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const Spacer(),
-                          Image.asset(
-                            'assets/img/pin_fill.png',
-                            width: 24,
-                            height: 24,
-                          ),
-                          const SizedBox(width: 52),
-                          Image.asset(
-                            'assets/img/daun.png',
-                            width: 24,
-                            height: 24,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      if (vehicles.isEmpty)
-                        const Center(
-                          child: Padding(
-                            padding: EdgeInsets.only(top: 112.0),
-                            child: Text(
-                              'Belum ada data.',
-                              style: TextStyle(fontSize: 16),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        )
-                      else ...[
-                        // Loop through vehicles to display dynamic data
-                        for (var vehicle in vehicles) ...[
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Image.asset(
-                                vehicle.vehicleType == 'Motor'
-                                    ? 'assets/img/MotorbikeIconFill.png'
-                                    : 'assets/img/CarIconFill.png',
-                                width: 24,
-                                height: 24,
-                              ),
-                              const SizedBox(width: 16),
-                              Text(
-                                vehicle.vehicleName,
-                                style: const TextStyle(
-                                    fontFamily: 'Poppins', fontSize: 16),
-                              ),
-                              const Spacer(),
-                              const SizedBox(width: 8),
-                              Text(
-                                '${vehicle.vehicleTravel}km',
-                                style: const TextStyle(
-                                    fontFamily: 'Poppins', fontSize: 16),
-                              ),
-                              const SizedBox(width: 42),
-                              Text(
-                                '${vehicle.vehicleEmission}kg',
-                                style: const TextStyle(
-                                    fontFamily: 'Poppins', fontSize: 16),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-                        const SizedBox(height: 16),
-                        const SizedBox(height: 8),
+                  const SizedBox(
+                      height: 32), // Jarak lebih besar di bagian atas
+                  SizedBox(
+                    height: 225, // Atur tinggi untuk PageView
+                    child: PageView(
+                      controller: _pageController,
+                      children: [
+                        CarbonReportView(
+                          carbonReportPercentage: carbonReportPercentageDaily,
+                          totalCarbonEmitted: totalCarbonEmittedDaily,
+                          totalDistanceTraveled: totalDistanceTraveledDaily,
+                          reportType: 'Daily',
+                          currentPage: 0,
+                        ),
+                        CarbonReportView(
+                          carbonReportPercentage: carbonReportPercentageWeekly,
+                          totalCarbonEmitted: totalCarbonEmittedWeekly,
+                          totalDistanceTraveled: totalDistanceTraveledWeekly,
+                          reportType: 'Weekly',
+                          currentPage: 1,
+                        ),
+                        CarbonReportView(
+                          carbonReportPercentage: carbonReportPercentageMonthly,
+                          totalCarbonEmitted: totalCarbonEmittedMonthly,
+                          totalDistanceTraveled: totalDistanceTraveledMonthly,
+                          reportType: 'Monthly',
+                          currentPage: 2,
+                        ),
+                        CarbonReportView(
+                          carbonReportPercentage: carbonReportPercentageYearly,
+                          totalCarbonEmitted: totalCarbonEmittedYearly,
+                          totalDistanceTraveled: totalDistanceTraveledYearly,
+                          reportType: 'Yearly',
+                          currentPage: 3,
+                        ),
                       ],
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 32), // Jarak antar widget yang lebih besar
-            GestureDetector(
-              onTap: () => _showCarbonStandardPopup(context),
-              child: Center(
-                child: Container(
-                  width: MediaQuery.of(context).size.width * 0.85,
-                  height: 215, // Matching the height of Carbon Report widget
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20.0),
-                    image: const DecorationImage(
-                      image: AssetImage('assets/img/carbon_standard_fix.png'),
-                      fit: BoxFit.cover,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 15,
-                        offset: Offset(0, 10), // Larger shadow at the bottom
-                      ),
-                    ],
                   ),
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        bottom: 16,
-                        left: 16,
-                        child: Row(
+                  const SizedBox(height: 32),
+                  Container(
+                    width: MediaQuery.of(context).size.width * 0.85,
+                    height: 186,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20.0),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 8.0,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.all(
+                            16.0), // Padding untuk seluruh konten
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            // Header row for first and second columns
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
                               children: [
-                                Text(
-                                  "MAXIMUM",
+                                const Text(
+                                  'Hari ini',
                                   style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 36, // Adjusted size for MAXIMUM
-                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
-                                Text(
-                                  "CARBON STANDARD",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize:
-                                        20, // Smaller size for CARBON STANDARD
-                                    fontWeight: FontWeight.normal,
-                                  ),
+                                const Spacer(),
+                                Image.asset(
+                                  'assets/img/pin_fill.png',
+                                  width: 24,
+                                  height: 24,
+                                ),
+                                const SizedBox(width: 52),
+                                Image.asset(
+                                  'assets/img/daun.png',
+                                  width: 24,
+                                  height: 24,
                                 ),
                               ],
                             ),
-                            SizedBox(width: 16), // Space between text and icon
-                            Image.asset(
-                              'assets/img/icon_maximum_carbon_standard.png',
-                              width: 80, // Adjust size as needed
-                              height: 80, // Adjust size as needed
+                            const SizedBox(height: 16),
+
+                            if (vehiclesReport.isEmpty)
+                              const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.only(top: 112.0),
+                                  child: Text(
+                                    'Belum ada data.',
+                                    style: TextStyle(fontSize: 16),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              )
+                            else ...[
+                              // Loop through vehicles to display dynamic data
+                              for (var vehicle in vehiclesReport) ...[
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    Image.asset(
+                                      vehicle.vehicleType == 'Motor'
+                                          ? 'assets/img/MotorbikeIconFill.png'
+                                          : 'assets/img/CarIconFill.png',
+                                      width: 24,
+                                      height: 24,
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Text(
+                                      vehicle.vehicleName,
+                                      style: const TextStyle(
+                                          fontFamily: 'Poppins', fontSize: 16),
+                                    ),
+                                    const Spacer(),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '${vehicle.vehicleTravel}km',
+                                      style: const TextStyle(
+                                          fontFamily: 'Poppins', fontSize: 16),
+                                    ),
+                                    const SizedBox(width: 42),
+                                    Text(
+                                      '${vehicle.vehicleEmission}kg',
+                                      style: const TextStyle(
+                                          fontFamily: 'Poppins', fontSize: 16),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                              ],
+                              const SizedBox(height: 16),
+                              const SizedBox(height: 8),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                      height: 32), // Jarak antar widget yang lebih besar
+                  GestureDetector(
+                    onTap: () => _showCarbonStandardPopup(context),
+                    child: Center(
+                      child: Container(
+                        width: MediaQuery.of(context).size.width * 0.85,
+                        height:
+                            215, // Matching the height of Carbon Report widget
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20.0),
+                          image: const DecorationImage(
+                            image: AssetImage(
+                                'assets/img/carbon_standard_fix.png'),
+                            fit: BoxFit.cover,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.3),
+                              blurRadius: 15,
+                              offset:
+                                  Offset(0, 10), // Larger shadow at the bottom
+                            ),
+                          ],
+                        ),
+                        child: Stack(
+                          children: [
+                            Positioned(
+                              bottom: 16,
+                              left: 16,
+                              child: Row(
+                                children: [
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "MAXIMUM",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize:
+                                              36, // Adjusted size for MAXIMUM
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Text(
+                                        "CARBON STANDARD",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize:
+                                              20, // Smaller size for CARBON STANDARD
+                                          fontWeight: FontWeight.normal,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(
+                                      width: 16), // Space between text and icon
+                                  Image.asset(
+                                    'assets/img/icon_maximum_carbon_standard.png',
+                                    width: 80, // Adjust size as needed
+                                    height: 80, // Adjust size as needed
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 32), // Jarak antar widget yang lebih besar
-            GestureDetector(
-              onTap: () => _showEmissionTestPopup(context),
-              child: Center(
-                child: Container(
-                  width: MediaQuery.of(context).size.width * 0.85,
-                  height: 215, // Matching the height of Carbon Report widget
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20.0),
-                    image: const DecorationImage(
-                      image: AssetImage('assets/img/lokasiujiemisi.png'),
-                      fit: BoxFit.cover,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 15,
-                        offset: Offset(0, 10), // Shadow lebih besar di bawah
-                      ),
-                    ],
                   ),
-                  child: Stack(
-                    // Menggunakan Stack untuk lapisan
-                    children: [
-                      // Layer gelap pertama
-                      Container(
+
+                  const SizedBox(
+                      height: 32), // Jarak antar widget yang lebih besar
+                  GestureDetector(
+                    onTap: () => _showEmissionTestPopup(context),
+                    child: Center(
+                      child: Container(
+                        width: MediaQuery.of(context).size.width * 0.85,
+                        height:
+                            215, // Matching the height of Carbon Report widget
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.3), // Gelap 30%
                           borderRadius: BorderRadius.circular(20.0),
-                        ),
-                      ),
-                      // Layer gelap kedua yang lebih gelap
-                      Positioned(
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.5), // Gelap 50%
-                            borderRadius: BorderRadius.vertical(
-                              bottom: Radius.circular(20.0),
-                            ),
+                          image: const DecorationImage(
+                            image: AssetImage('assets/img/lokasiujiemisi.png'),
+                            fit: BoxFit.cover,
                           ),
-                          padding: EdgeInsets.all(16), // Padding untuk teks
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Lokasi Uji Emisi",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 28, // Perbesar ukuran font
-                                  fontWeight: FontWeight
-                                      .w600, // Set ketebalan font sama
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.3),
+                              blurRadius: 15,
+                              offset:
+                                  Offset(0, 10), // Shadow lebih besar di bawah
+                            ),
+                          ],
+                        ),
+                        child: Stack(
+                          // Menggunakan Stack untuk lapisan
+                          children: [
+                            // Layer gelap pertama
+                            Container(
+                              decoration: BoxDecoration(
+                                color:
+                                    Colors.black.withOpacity(0.3), // Gelap 30%
+                                borderRadius: BorderRadius.circular(20.0),
+                              ),
+                            ),
+                            // Layer gelap kedua yang lebih gelap
+                            Positioned(
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.black
+                                      .withOpacity(0.5), // Gelap 50%
+                                  borderRadius: BorderRadius.vertical(
+                                    bottom: Radius.circular(20.0),
+                                  ),
+                                ),
+                                padding:
+                                    EdgeInsets.all(16), // Padding untuk teks
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Lokasi Uji Emisi",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 28, // Perbesar ukuran font
+                                        fontWeight: FontWeight
+                                            .w600, // Set ketebalan font sama
+                                      ),
+                                    ),
+                                    SizedBox(height: 4), // Spasi antara teks
+                                    Row(
+                                      children: [
+                                        Text(
+                                          "Terdekat",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 28, // Samakan ukuran font
+                                            fontWeight: FontWeight
+                                                .w600, // Samakan ketebalan
+                                          ),
+                                        ),
+                                        SizedBox(
+                                            width:
+                                                8), // Jarak antara teks dan ikon
+                                        Icon(
+                                          Icons
+                                              .arrow_forward, // Ikon panah ke kanan
+                                          color: Colors.white,
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
                               ),
-                              SizedBox(height: 4), // Spasi antara teks
-                              Row(
-                                children: [
-                                  Text(
-                                    "Terdekat",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 28, // Samakan ukuran font
-                                      fontWeight:
-                                          FontWeight.w600, // Samakan ketebalan
-                                    ),
-                                  ),
-                                  SizedBox(
-                                      width: 8), // Jarak antara teks dan ikon
-                                  Icon(
-                                    Icons.arrow_forward, // Ikon panah ke kanan
-                                    color: Colors.white,
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
+
+                  const SizedBox(
+                      height: 32), // Jarak lebih besar di bagian bawah
+                ],
               ),
             ),
-
-            const SizedBox(height: 32), // Jarak lebih besar di bagian bawah
-          ],
-        ),
-      ),
       bottomNavigationBar: CustomBottomNavBar(
         selectedIndex: _selectedIndex,
         user: user,

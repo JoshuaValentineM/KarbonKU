@@ -18,6 +18,8 @@ class CarbonReportView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final displayPercentage =
+        carbonReportPercentage > 100 ? 100 : carbonReportPercentage;
     return Padding(
       padding: const EdgeInsets.only(top: 8.0),
       child: Center(
@@ -75,59 +77,79 @@ class CarbonReportView extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      '${carbonReportPercentage.toInt()}%',
+                      '${displayPercentage.toInt()}%',
                       style: TextStyle(
                         color: (carbonReportPercentage > 100)
-                            ? const Color(0xFFD66666)
-                            : const Color(
-                                0xFF66D6A6), // Mengubah warna teks berdasarkan nilai
+                            ? const Color(
+                                0xFFD66666) // Warna merah jika lebih dari 100%
+                            : (carbonReportPercentage > 75)
+                                ? const Color.fromARGB(255, 246, 162,
+                                    44) // Warna FFB323 jika antara 75% dan 100%
+                                : const Color(
+                                    0xFF66D6A6), // Warna hijau jika di bawah 75%
+
                         fontSize: 75,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox( width: (carbonReportPercentage > 100) ? 16 : 38),
+                    SizedBox(
+                      width: (carbonReportPercentage > 100)
+                          ? 16
+                          : (carbonReportPercentage < 100 &&
+                                  carbonReportPercentage >= 10)
+                              ? 64 // Lebar untuk 2 digit
+                              : 88, // Lebar untuk 1 digit (atau lebih besar jika perlu)
+                    ),
                     Image.asset(
                       'assets/img/ReportDivider.png',
                       height: 100,
                     ),
                     const SizedBox(width: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              '${totalCarbonEmitted.toString()}kg',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  '${(totalCarbonEmitted / 1000).toStringAsFixed(totalCarbonEmitted / 1000 >= 10 ? 1 : 2)}kg',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                  ),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 20),
-                            Image.asset(
-                              'assets/img/leaf.png',
-                              height: 14,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Text(
-                              '${totalDistanceTraveled.toString()}km',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
+                              const SizedBox(width: 18),
+                              Image.asset(
+                                'assets/img/leaf.png',
+                                height: 14,
                               ),
-                            ),
-                            const SizedBox(width: 4),
-                            Image.asset(
-                              'assets/img/pin_range.png',
-                              height: 16,
-                            ),
-                          ],
-                        ),
-                      ],
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  '${(totalDistanceTraveled / 1000).toStringAsFixed(totalDistanceTraveled / 1000 >= 10 ? 1 : 2)}km',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Image.asset(
+                                'assets/img/pin_range.png',
+                                height: 16,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
