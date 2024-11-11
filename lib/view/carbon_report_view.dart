@@ -18,8 +18,6 @@ class CarbonReportView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayPercentage =
-        carbonReportPercentage > 100 ? 100 : carbonReportPercentage;
     return Padding(
       padding: const EdgeInsets.only(top: 8.0),
       child: Center(
@@ -77,9 +75,11 @@ class CarbonReportView extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      '${displayPercentage.toInt()}%',
+                      carbonReportPercentage > 100
+                          ? '>100%'
+                          : '${carbonReportPercentage.toInt()}%',
                       style: TextStyle(
-                        color: (carbonReportPercentage > 100)
+                        color: (carbonReportPercentage >= 100)
                             ? const Color(
                                 0xFFD66666) // Warna merah jika lebih dari 100%
                             : (carbonReportPercentage > 75)
@@ -88,17 +88,17 @@ class CarbonReportView extends StatelessWidget {
                                 : const Color(
                                     0xFF66D6A6), // Warna hijau jika di bawah 75%
 
-                        fontSize: 75,
+                        fontSize: carbonReportPercentage > 100 ? 64 : 75,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     SizedBox(
-                      width: (carbonReportPercentage > 100)
+                      width: (carbonReportPercentage >= 100)
                           ? 16
                           : (carbonReportPercentage < 100 &&
                                   carbonReportPercentage >= 10)
-                              ? 64 // Lebar untuk 2 digit
-                              : 88, // Lebar untuk 1 digit (atau lebih besar jika perlu)
+                              ? 48 // Lebar untuk 2 digit
+                              : 72, // Lebar untuk 1 digit (atau lebih besar jika perlu)
                     ),
                     Image.asset(
                       'assets/img/ReportDivider.png',
@@ -112,16 +112,19 @@ class CarbonReportView extends StatelessWidget {
                           Row(
                             children: [
                               Flexible(
-                                child: Text(
-                                  '${(totalCarbonEmitted / 1000).toStringAsFixed(totalCarbonEmitted / 1000 >= 10 ? 1 : 2)}kg',
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14,
+                                child: Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Text(
+                                    '${(totalCarbonEmitted / 1000).toStringAsFixed(totalCarbonEmitted / 1000 >= 10 ? 1 : 2)}kg',
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                    ),
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 18),
+                              const SizedBox(width: 8),
                               Image.asset(
                                 'assets/img/leaf.png',
                                 height: 14,
@@ -132,16 +135,19 @@ class CarbonReportView extends StatelessWidget {
                           Row(
                             children: [
                               Flexible(
-                                child: Text(
-                                  '${(totalDistanceTraveled / 1000).toStringAsFixed(totalDistanceTraveled / 1000 >= 10 ? 1 : 2)}km',
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14,
+                                child: Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Text(
+                                    '${(totalDistanceTraveled / 1000).toStringAsFixed(totalDistanceTraveled / 1000 >= 10 ? 1 : 2)}km',
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                    ),
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 10),
+                              const SizedBox(width: 8),
                               Image.asset(
                                 'assets/img/pin_range.png',
                                 height: 16,

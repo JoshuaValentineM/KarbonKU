@@ -501,7 +501,7 @@ class _ProfilePageState extends State<ProfilePage> {
               // Data sudah ditambahkan di AddVehicleForm, tidak perlu menambah lagi di sini
 
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Kendaraan berhasil ditambahkan')),
+                const SnackBar(content: Text('Vehicle added successfully')),
               );
               Navigator.of(context).pop(); // Close the dialog
             },
