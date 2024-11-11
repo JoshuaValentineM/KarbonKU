@@ -743,7 +743,8 @@ class _HomePageState extends State<HomePage> {
                       controller: _pageController,
                       children: [
                         CarbonReportView(
-                          carbonReportPercentage: carbonReportPercentageDaily,
+                          carbonReportPercentage:
+                              carbonReportPercentageDaily,
                           totalCarbonEmitted: totalCarbonEmittedDaily,
                           totalDistanceTraveled: totalDistanceTraveledDaily,
                           reportType: 'Daily',
