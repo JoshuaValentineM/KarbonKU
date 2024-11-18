@@ -19,6 +19,8 @@ class TrackingPage extends StatefulWidget {
 
 class _TrackingPageState extends State<TrackingPage> {
   late GoogleMapController _mapController;
+  Key _mapKey = UniqueKey();
+
   Location _location = Location();
   List<LatLng> _routePoints = [];
   PolylinePoints polylinePoints = PolylinePoints();
@@ -199,6 +201,7 @@ class _TrackingPageState extends State<TrackingPage> {
     setState(() {
       _isShowTrackingInfo = true;
       _isTracking = !_isTracking;
+      _mapKey = UniqueKey();
       if (!_isTracking) {
         _calculateDistanceTraveled();
       } else {
@@ -412,9 +415,10 @@ class _TrackingPageState extends State<TrackingPage> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min, // Centers content vertically in each column
                             children: [
+                              const SizedBox(height: 16.0),
                               Text(
                                 (_totalEmission < 10000) ? (_totalEmission / 1000).toStringAsFixed(1) : (_totalEmission / 1000).toStringAsFixed(0), 
-                                style: const TextStyle(fontSize: 80, color: Color(0xFF66D6A6)),
+                                style: const TextStyle(fontSize: 80, color: Color(0xFF66D6A6), height: 1),
                               ),
                               Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -448,9 +452,10 @@ class _TrackingPageState extends State<TrackingPage> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
+                              const SizedBox(height: 16.0),
                               Text(
                                 (_totalDistance < 10000) ? (_totalDistance / 1000).toStringAsFixed(1) : (_totalDistance / 1000).toStringAsFixed(0), // Convert meters to kilometers
-                                style: const TextStyle(fontSize: 80, color: Color(0xFF66D6A6)),
+                                style: const TextStyle(fontSize: 80, color: Color(0xFF66D6A6), height: 1),
                               ),
                               Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -560,6 +565,7 @@ class _TrackingPageState extends State<TrackingPage> {
           ? Stack(
               children: [
                 GoogleMap(
+                  key: _mapKey,
                   initialCameraPosition: CameraPosition(
                     target: _initialPosition ?? LatLng(0.0, 0.0),
                     zoom: 17.0,
@@ -637,7 +643,9 @@ class _TrackingPageState extends State<TrackingPage> {
           : const Center(
               child: CircularProgressIndicator(),
             ),
-      bottomNavigationBar: CustomBottomNavBar(
+      bottomNavigationBar: _isTracking 
+      ? null 
+      : CustomBottomNavBar(
         selectedIndex: _selectedIndex,
         user: user,
       ),

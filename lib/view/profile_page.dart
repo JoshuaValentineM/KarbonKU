@@ -22,16 +22,20 @@ class _ProfilePageState extends State<ProfilePage> {
   String profilePicture = '';
   String location = '';
 
+  double _totalEmission = 0.0;
+  double _totalDistance = 0.0;
+
   @override
   void initState() {
     super.initState();
     _loadUserProfile();
+    _fetchEmissionInfo();
   }
 
   void _loadUserProfile() async {
     var userData = await FirebaseFirestore.instance
         .collection('users')
-        .doc(widget.user?.uid)
+        .doc(widget.user.uid)
         .get();
 
     setState(() {
@@ -42,6 +46,45 @@ class _ProfilePageState extends State<ProfilePage> {
           userData.data()?['profilePicture'] ?? widget.user?.photoURL ?? '';
       location = userData.data()?['location'] ?? '';
     });
+  }
+
+  Future<void> _fetchEmissionInfo() async {
+    try {
+      // Get the user's vehicle document(s)
+      var vehiclesData = await FirebaseFirestore.instance
+          .collection('vehicles')
+          .where('userId', isEqualTo: widget.user.uid)
+          .get();
+
+      double totalEmission = 0.0;
+      double totalDistance = 0.0;
+
+      // Iterate over each vehicle document
+      for (var vehicle in vehiclesData.docs) {
+        // Get the data for the vehicle
+        var vehicleData = vehicle.data();
+
+        // Check if the 'tracks' field exists and is a list
+        var tracks = vehicleData['tracks'];
+        if (tracks != null && tracks is List) {
+          for (var track in tracks) {
+            
+            if (track['carbon_emission'] != null && track['distance'] != null) {
+              totalEmission += track['carbon_emission'];
+              totalDistance += track['distance'];
+            }
+          }
+        }
+      }
+
+      // Set the state with the updated totals
+      setState(() {
+        _totalEmission = totalEmission;
+        _totalDistance = totalDistance;
+      });
+    } catch (e) {
+      print('Error fetching emission info: $e');
+    }
   }
 
   void _signOut(BuildContext context) async {
@@ -59,12 +102,9 @@ class _ProfilePageState extends State<ProfilePage> {
     User? user = FirebaseAuth.instance.currentUser;
 
     return FutureBuilder<DocumentSnapshot>(
-      future:
-          FirebaseFirestore.instance.collection('users').doc(user?.uid).get(),
+      future: FirebaseFirestore.instance.collection('users').doc(user?.uid).get(),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
+        bool isLoading = snapshot.connectionState == ConnectionState.waiting;
 
         if (snapshot.hasError) {
           return const Center(child: Text('Error loading profile data'));
@@ -86,55 +126,59 @@ class _ProfilePageState extends State<ProfilePage> {
 
         return Scaffold(
           backgroundColor: const Color(0xFFEFFFF8),
-          body: SingleChildScrollView(
-            child: Column(
+          appBar: AppBar(
+            backgroundColor: const Color(0xFF3B645E),
+            elevation: 0,
+            title: const Text(
+              'Profile',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+          body: !isLoading 
+          ? Stack(
               children: [
-                Material(
-                  elevation: 4,
-                  color: const Color(0xFF3B645E),
-                  child: AppBar(
-                    backgroundColor: const Color(0xFF3B645E),
-                    title: const Text(
-                      'Profile',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    elevation: 0,
-                  ),
-                ),
-                const SizedBox(height: 40),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 20.0),
+                SingleChildScrollView(
                   child: Column(
                     children: [
-                      _buildProfileBox(
-                          context, user, location, profilePicture, displayName),
-                      const SizedBox(height: 20),
-                      _buildVehicleBox(context),
-                      const SizedBox(height: 20),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1A373B),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 50, vertical: 12),
-                        ),
-                        onPressed: () => _signOut(context),
-                        child: const Text(
-                          'Keluar',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                          ),
+                      const SizedBox(height: 40),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 20.0),
+                        child: Column(
+                          children: [
+                            _buildProfileBox(
+                                context, user, location, profilePicture, displayName),
+                            const SizedBox(height: 20),
+                            _buildVehicleBox(context),
+                            const SizedBox(height: 20),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF1A373B),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 50, vertical: 12),
+                              ),
+                              onPressed: () => _signOut(context),
+                              child: const Text(
+                                'Keluar',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
               ],
-            ),
-          ),
+            ) 
+          : const Center(
+                child: CircularProgressIndicator(),
+              ),
           bottomNavigationBar: CustomBottomNavBar(
             selectedIndex: _selectedIndex,
             user: user,
@@ -143,6 +187,7 @@ class _ProfilePageState extends State<ProfilePage> {
       },
     );
   }
+
 
   Widget _buildProfileBox(BuildContext context, User? user, String location,
       String profilePicture, String displayName) {
@@ -186,7 +231,7 @@ class _ProfilePageState extends State<ProfilePage> {
               const SizedBox(height: 5),
               Text(
                 location,
-                style: TextStyle(color: Colors.white),
+                style: const TextStyle(color: Colors.white),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
@@ -206,7 +251,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
-                            '3521',
+                            (_totalEmission/1000).toStringAsFixed(0),
                             style: Theme.of(context)
                                 .textTheme
                                 .headlineSmall
@@ -232,7 +277,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
-                            '4500',
+                            (_totalDistance/1000).toStringAsFixed(0),
                             style: Theme.of(context)
                                 .textTheme
                                 .headlineSmall
