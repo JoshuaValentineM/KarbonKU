@@ -93,8 +93,8 @@ class _HomePageState extends State<HomePage> {
             }
 
             if (trackDate != null) {
-              double carbon = track['carbon_emission'] ?? 0.0;
-              double distance = track['distance'] ?? 0.0;
+              double carbon = double.tryParse(track['carbon_emission']?.toString() ?? '0.0') ?? 0.0;
+              double distance = double.tryParse(track['distance']?.toString() ?? '0.0') ?? 0.0;
 
               if (!trackDate.isBefore(today)) {
                 // Hitung juga yang terjadi hari ini
@@ -300,11 +300,11 @@ class _HomePageState extends State<HomePage> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
+          insetPadding: EdgeInsets.zero,
           child: Container(
             padding: EdgeInsets.all(15),
             constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width *
-                  1, // Atur lebar maksimal popup sesuai kebutuhan
+              maxWidth: MediaQuery.of(context).size.width * 0.85, // Atur lebar maksimal popup sesuai kebutuhan
             ),
             child: SingleChildScrollView(
               child: Column(
@@ -319,9 +319,9 @@ class _HomePageState extends State<HomePage> {
                       fit: BoxFit.contain,
                     ),
                   ),
-                  SizedBox(height: 5), // Add some space
+                  const SizedBox(height: 5), // Add some space
                   // Description text
-                  Text.rich(
+                  const Text.rich(
                     TextSpan(
                       children: [
                         TextSpan(
@@ -743,8 +743,7 @@ class _HomePageState extends State<HomePage> {
                       controller: _pageController,
                       children: [
                         CarbonReportView(
-                          carbonReportPercentage:
-                              carbonReportPercentageDaily,
+                          carbonReportPercentage: carbonReportPercentageDaily,
                           totalCarbonEmitted: totalCarbonEmittedDaily,
                           totalDistanceTraveled: totalDistanceTraveledDaily,
                           reportType: 'Daily',
