@@ -164,13 +164,22 @@ class EducationPage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8.0),
                     child: Image.network(
                       imageUrl,
-                      width: 150,
+                      width: 175,
                       height: 100,
                       fit: BoxFit.cover,
                     ),
                   ),
                   const SizedBox(height: 5),
-                  Text(title, style: const TextStyle(fontSize: 14)),
+                  SizedBox(
+                    width: 150, // Maximum width for the title
+                    child: Text(
+                      title,
+                      style: const TextStyle(fontSize: 14),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis, // Add "..." if text overflows
+                      textAlign: TextAlign.center, // Optional for alignment
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -182,7 +191,7 @@ class EducationPage extends StatelessWidget {
 
   Widget _buildHorizontalArticleScroll(List<Map<String, dynamic>> articles) {
     return SizedBox(
-      height: 312,
+      height: 345,
       child: GridView.builder(
         scrollDirection: Axis.horizontal,
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -272,6 +281,8 @@ class EducationPage extends StatelessWidget {
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 5),
                 Text(
