@@ -7,6 +7,7 @@ import 'carbon_report_view.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -22,6 +23,14 @@ class _HomePageState extends State<HomePage> {
     user = FirebaseAuth.instance.currentUser; // Get the current logged-in user
     _loadVehicleData();
     fetchCities(); // Panggil fungsi untuk mengambil kota
+    fetchVehicleReport();
+  }
+
+  String formatDate(String date) {
+    DateTime parsedDate =
+        DateTime.parse(date); // Mengubah string menjadi DateTime
+    return DateFormat('dd MMM, yyyy')
+        .format(parsedDate); // Format ke "17 Nov, 2024"
   }
 
   int _selectedIndex = 2; // Default selected tab is Home
@@ -48,6 +57,8 @@ class _HomePageState extends State<HomePage> {
   double totalDistanceTraveledYearly = 0.0;
 
   List<Map<String, dynamic>> vehicles = [];
+  Map<String, Map<String, double>> groupedDailyData = {};
+  List<Vehicle> vehiclesReport = [];
 
   Future<void> _loadVehicleData() async {
     setState(() {
@@ -59,6 +70,8 @@ class _HomePageState extends State<HomePage> {
           .collection('vehicles')
           .where('userId', isEqualTo: FirebaseAuth.instance.currentUser!.uid);
       final querySnapshot = await vehiclesRef.get();
+
+      List<Vehicle> tempVehiclesReport = [];
 
       List<Map<String, dynamic>> tempVehicles = [];
       double dailyEmissions = 0.0;
@@ -78,11 +91,12 @@ class _HomePageState extends State<HomePage> {
 
       for (var doc in querySnapshot.docs) {
         var vehicleData = doc.data() as Map<String, dynamic>;
-        print("Data Kendaraan: $vehicleData");
 
         if (vehicleData.containsKey('tracks')) {
-          var tracks = vehicleData['tracks'] as List<dynamic>;
+          double totalEmission = 0.0;
+          double totalDistance = 0.0;
 
+          var tracks = vehicleData['tracks'] as List<dynamic>;
           for (var track in tracks) {
             DateTime? trackDate;
 
@@ -93,8 +107,14 @@ class _HomePageState extends State<HomePage> {
             }
 
             if (trackDate != null) {
-              double carbon = double.tryParse(track['carbon_emission']?.toString() ?? '0.0') ?? 0.0;
-              double distance = double.tryParse(track['distance']?.toString() ?? '0.0') ?? 0.0;
+              totalEmission += track['carbon_emission'] ?? 0.0;
+              totalDistance += track['distance'] ?? 0.0;
+              double carbon = double.tryParse(
+                      track['carbon_emission']?.toString() ?? '0.0') ??
+                  0.0;
+              double distance =
+                  double.tryParse(track['distance']?.toString() ?? '0.0') ??
+                      0.0;
 
               if (!trackDate.isBefore(today)) {
                 // Hitung juga yang terjadi hari ini
@@ -122,18 +142,17 @@ class _HomePageState extends State<HomePage> {
             }
           }
 
-          tempVehicles.add({
-            'vehicleName': vehicleData['vehicleName'],
-            'vehicleType': vehicleData['vehicleType'],
-            'tracks': tracks,
-          });
-        } else {
-          print("Tidak ada 'tracks' dalam dokumen ${doc.id}");
+          tempVehiclesReport.add(Vehicle(
+            vehicleType: vehicleData['vehicleType'] ?? 'Unknown',
+            vehicleName: vehicleData['vehicleName'] ?? 'Unknown',
+            vehicleEmission: totalEmission,
+            vehicleTravel: totalDistance,
+          ));
         }
       }
 
       setState(() {
-        vehicles = tempVehicles;
+        vehiclesReport = tempVehiclesReport;
         totalCarbonEmittedDaily = dailyEmissions;
         totalDistanceTraveledDaily = dailyDistance;
         totalCarbonEmittedWeekly = weeklyEmissions;
@@ -155,13 +174,6 @@ class _HomePageState extends State<HomePage> {
 
         isLoading = false;
       });
-
-      print("Emisi Harian: $dailyEmissions, Jarak Harian: $dailyDistance");
-      print(
-          "Emisi Mingguan: $weeklyEmissions, Jarak Mingguan: $weeklyDistance");
-      print(
-          "Emisi Bulanan: $monthlyEmissions, Jarak Bulanan: $monthlyDistance");
-      print("Emisi Tahunan: $yearlyEmissions, Jarak Tahunan: $yearlyDistance");
     } catch (e) {
       print("Error loading vehicle data: $e");
       setState(() {
@@ -169,24 +181,6 @@ class _HomePageState extends State<HomePage> {
       });
     }
   }
-
-  List<Vehicle> vehiclesReport = [
-    Vehicle(
-        vehicleType: 'Motor',
-        vehicleName: 'Honda Beat',
-        vehicleEmission: 3,
-        vehicleTravel: 20),
-    Vehicle(
-        vehicleType: 'Mobil',
-        vehicleName: 'Creta',
-        vehicleEmission: 5,
-        vehicleTravel: 24),
-    Vehicle(
-        vehicleType: 'Mobil',
-        vehicleName: 'Inova',
-        vehicleEmission: 3,
-        vehicleTravel: 54),
-  ];
 
   List<String> cityList = [];
   String? selectedCity;
@@ -203,30 +197,102 @@ class _HomePageState extends State<HomePage> {
     return await Geolocator.getCurrentPosition();
   }
 
+  Map<String, Map<String, double>> dailyData = {};
+  Map<String, List<Map<String, dynamic>>> detailedDailyData = {};
+
+  void fetchVehicleReport() async {
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('vehicles')
+        .where('userId', isEqualTo: FirebaseAuth.instance.currentUser!.uid)
+        .get();
+
+    Map<String, List<Map<String, dynamic>>> tempDetailedDailyData = {};
+
+    for (var doc in querySnapshot.docs) {
+      var vehicleData = doc.data() as Map<String, dynamic>;
+
+      if (vehicleData.containsKey('tracks')) {
+        var tracks = vehicleData['tracks'] as List<dynamic>;
+        for (var track in tracks) {
+          DateTime? trackDate;
+
+          if (track['date'] is Timestamp) {
+            trackDate = (track['date'] as Timestamp).toDate();
+          } else if (track['date'] is String) {
+            trackDate = DateTime.tryParse(track['date']);
+          }
+
+          if (trackDate != null) {
+            String dateKey = trackDate.toIso8601String().split('T').first;
+
+            double carbon = double.tryParse(
+                    track['carbon_emission']?.toString() ?? '0.0') ??
+                0.0;
+            double distance =
+                (double.tryParse(track['distance']?.toString() ?? '0.0') ??
+                        0.0) /
+                    1000;
+
+            if (!tempDetailedDailyData.containsKey(dateKey)) {
+              tempDetailedDailyData[dateKey] = [];
+            }
+
+            tempDetailedDailyData[dateKey]!.add({
+              'vehicleName': vehicleData['vehicleName'] ?? 'Unknown',
+              'vehicleType': vehicleData['vehicleType'] ?? 'unknown',
+              'carbonEmission': carbon,
+              'distance': distance,
+            });
+          }
+        }
+      }
+    }
+
+    // Mengurutkan data berdasarkan tanggal (dateKey)
+    var sortedKeys = tempDetailedDailyData.keys.toList()
+      ..sort((a, b) => DateTime.parse(a).compareTo(DateTime.parse(b)));
+
+    // Menyusun data yang sudah diurutkan
+    Map<String, List<Map<String, dynamic>>> sortedData = {};
+    for (var key in sortedKeys) {
+      sortedData[key] = tempDetailedDailyData[key]!;
+    }
+
+    setState(() {
+      detailedDailyData = sortedData;
+    });
+  }
+
   Future<void> fetchCities() async {
     setState(() {
-      isLoading = true; // Set loading state to true
+      isLoading = true;
     });
 
     try {
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection('test_emission_locations')
           .get();
+
       setState(() {
         cityList = querySnapshot.docs.map((doc) => doc.id).toList();
-        selectedCity = cityList.isNotEmpty ? cityList[0] : null;
+
+        // Set "Jakarta Barat" as default if available
+        if (cityList.contains('Jakarta Barat')) {
+          selectedCity = 'Jakarta Barat';
+        } else {
+          selectedCity = cityList.isNotEmpty ? cityList[0] : null;
+        }
       });
 
-      // Fetch workshops for the first city
+      // Fetch workshops for the default city
       if (selectedCity != null) {
         await fetchWorkshops(selectedCity!);
       }
     } catch (e) {
-      // Handle any errors
       print("Error fetching cities: $e");
     } finally {
       setState(() {
-        isLoading = false; // Set loading state to false after fetching
+        isLoading = false;
       });
     }
   }
@@ -304,7 +370,8 @@ class _HomePageState extends State<HomePage> {
           child: Container(
             padding: EdgeInsets.all(15),
             constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * 0.85, // Atur lebar maksimal popup sesuai kebutuhan
+              maxWidth: MediaQuery.of(context).size.width *
+                  0.85, // Atur lebar maksimal popup sesuai kebutuhan
             ),
             child: SingleChildScrollView(
               child: Column(
@@ -502,11 +569,43 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  late GoogleMapController mapController;
+  Future<void> updateWorkshops(String city) async {
+    try {
+      setState(() {
+        isLoading = true;
+      });
 
-  // Function to set the map controller once the map is created
+      await fetchWorkshops(city);
+
+      // Move the camera to the first workshop location if available
+      if (emissionLocations.isNotEmpty) {
+        double? lat = double.tryParse(emissionLocations[0]['latitude'] ?? '');
+        double? lng = double.tryParse(emissionLocations[0]['longitude'] ?? '');
+
+        if (lat != null && lng != null) {
+          _mapController!.animateCamera(
+            CameraUpdate.newLatLng(LatLng(lat, lng)),
+          );
+        }
+      }
+
+      setState(() {
+        isLoading = false;
+      });
+    } catch (error) {
+      setState(() {
+        isLoading = false;
+      });
+      print("Error fetching workshops: $error");
+    }
+  }
+
+  GoogleMapController? _mapController;
+
   void _onMapCreated(GoogleMapController controller) {
-    mapController = controller;
+    if (_mapController == null) {
+      _mapController = controller;
+    }
   }
 
   void _showEmissionTestPopup(BuildContext context) {
@@ -515,48 +614,54 @@ class _HomePageState extends State<HomePage> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            void updateWorkshops(String city) async {
-              try {
+            LatLng initialLocation =
+                LatLng(-6.200000, 106.816666); // Jakarta coordinates
+            Set<Marker> _markers = {};
+
+            void _zoomToWorkshop(Map<String, dynamic> workshop) async {
+              double? lat = double.tryParse(workshop['latitude'] ?? '');
+              double? lng = double.tryParse(workshop['longitude'] ?? '');
+              print("Workshop selected: ${workshop['name']}");
+              print("Target coordinates: $lat, $lng");
+
+              if (lat != null && lng != null) {
+                LatLng target = LatLng(lat, lng);
+
+                // Perbarui markers
                 setState(() {
-                  isLoading = true;
+                  _markers = {
+                    Marker(
+                      markerId: MarkerId(workshop['name']),
+                      position: target,
+                      infoWindow: InfoWindow(
+                        title: workshop['name'],
+                        snippet: workshop['address'],
+                      ),
+                    ),
+                  };
                 });
 
-                await fetchWorkshops(city);
-                print("emissionLocations: $emissionLocations");
-                // Move the camera to the first workshop location if available
-                if (emissionLocations.isNotEmpty) {
-                  double? lat =
-                      double.tryParse(emissionLocations[0]['latitude'] ?? '');
-                  double? lng =
-                      double.tryParse(emissionLocations[0]['longitude'] ?? '');
-
-                  if (lat != null && lng != null) {
-                    mapController.animateCamera(
-                      CameraUpdate.newLatLng(LatLng(lat, lng)),
-                    );
-                  }
+                print("_mapController: $_mapController");
+                // Zoom-in ke lokasi marker
+                if (_mapController != null) {
+                  await _mapController!.animateCamera(
+                    CameraUpdate.newCameraPosition(
+                      CameraPosition(target: target, zoom: 15),
+                    ),
+                  );
                 }
-
-                setState(() {
-                  isLoading = false;
-                });
-              } catch (error) {
-                setState(() {
-                  isLoading = false;
-                });
-                print("Error fetching workshops: $error");
               }
             }
 
-            // Set initial location for the map
-            LatLng initialLocation = LatLng(-6.200000, 106.816666);
-
             return Dialog(
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              insetPadding: EdgeInsets.zero,
               child: Container(
                 padding: EdgeInsets.all(16),
-                height: 600,
+                width: MediaQuery.of(context).size.width * 0.85,
+                height: MediaQuery.of(context).size.height * 0.6,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -581,27 +686,30 @@ class _HomePageState extends State<HomePage> {
                               zoom: 11,
                             ),
                             onMapCreated: _onMapCreated,
-                            markers: emissionLocations
-                                .where((location) =>
-                                    location['latitude'] != null &&
-                                    location['longitude'] != null)
-                                .map((location) {
-                              double? lat =
-                                  double.tryParse(location['latitude'] ?? '');
-                              double? lng =
-                                  double.tryParse(location['longitude'] ?? '');
-                              if (lat != null && lng != null) {
-                                return Marker(
-                                  markerId: MarkerId(location['name']),
-                                  position: LatLng(lat, lng),
-                                  infoWindow: InfoWindow(
-                                    title: location['name'],
-                                    snippet: location['address'],
-                                  ),
-                                );
-                              }
-                              return Marker(markerId: MarkerId('null'));
-                            }).toSet(),
+                            markers: _markers.isNotEmpty
+                                ? _markers
+                                : emissionLocations
+                                    .where((location) =>
+                                        location['latitude'] != null &&
+                                        location['longitude'] != null)
+                                    .map((location) {
+                                    double? lat = double.tryParse(
+                                        location['latitude'] ?? '');
+                                    double? lng = double.tryParse(
+                                        location['longitude'] ?? '');
+                                    if (lat != null && lng != null) {
+                                      return Marker(
+                                        markerId: MarkerId(location['name']),
+                                        position: LatLng(lat, lng),
+                                        infoWindow: InfoWindow(
+                                          title: location['name'],
+                                          snippet: location['address'],
+                                        ),
+                                      );
+                                    }
+                                    return Marker(markerId: MarkerId('null'));
+                                  }).toSet(),
+                            zoomControlsEnabled: false,
                           ),
                         ),
                       ),
@@ -635,7 +743,8 @@ class _HomePageState extends State<HomePage> {
                             setState(() {
                               selectedCity = newValue;
                             });
-                            updateWorkshops(selectedCity!);
+                            // Call updateWorkshops after updating the selected city.
+                            updateWorkshops(newValue);
                           }
                         },
                         isExpanded: true,
@@ -643,10 +752,7 @@ class _HomePageState extends State<HomePage> {
                         items: cityList.map((city) {
                           return DropdownMenuItem(
                             value: city,
-                            child: Text(
-                              city,
-                              style: TextStyle(fontSize: 12),
-                            ),
+                            child: Text(city, style: TextStyle(fontSize: 12)),
                           );
                         }).toList(),
                       ),
@@ -656,48 +762,52 @@ class _HomePageState extends State<HomePage> {
                       Center(child: CircularProgressIndicator())
                     else
                       Expanded(
-                        child: ListView.builder(
+                        child: ListView.separated(
                           itemCount: emissionLocations.length,
+                          separatorBuilder: (context, index) => Divider(
+                            color: Colors.grey,
+                            thickness: 1,
+                            height: 16, // Jarak vertikal antara item dan garis
+                          ),
                           itemBuilder: (context, index) {
-                            return Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 8.0),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    flex: 6,
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          emissionLocations[index]['name']
-                                              as String,
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        Text(
-                                          emissionLocations[index]['address']
-                                              as String,
-                                        ),
-                                        Text(
-                                          "Open ${emissionLocations[index]['openTime']} - ${emissionLocations[index]['closeTime']} everyday",
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Expanded(
-                                    flex: 4,
-                                    child: Text(
-                                      "${emissionLocations[index]['distance'].toStringAsFixed(2)} km",
-                                      textAlign: TextAlign.right,
-                                      style: TextStyle(
-                                        color: Colors.grey[700],
+                            final workshop = emissionLocations[index];
+                            return GestureDetector(
+                              onTap: () => _zoomToWorkshop(workshop),
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8.0),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      flex: 6,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            workshop['name'] as String,
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                          Text(workshop['address'] as String),
+                                          Text(
+                                            "Open ${workshop['openTime']} - ${workshop['closeTime']} everyday",
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                  ),
-                                ],
+                                    Expanded(
+                                      flex: 4,
+                                      child: Text(
+                                        "${workshop['distance'].toStringAsFixed(2)} km",
+                                        textAlign: TextAlign.right,
+                                        style:
+                                            TextStyle(color: Colors.grey[700]),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             );
                           },
@@ -713,9 +823,223 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void _showDetailedDataPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          insetPadding: EdgeInsets.zero,
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.85,
+            height: MediaQuery.of(context).size.height * 0.6,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20.0),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8.0,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Header Row
+                    Table(
+                      columnWidths: const {
+                        0: FlexColumnWidth(3),
+                        1: FlexColumnWidth(2),
+                        2: FlexColumnWidth(2),
+                      },
+                      border: null,
+                      children: [
+                        TableRow(
+                          children: [
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 2.0),
+                              child: Text(
+                                "",
+                                style: const TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            Center(
+                              child: Image.asset(
+                                'assets/img/pin_fill.png',
+                                width: 24,
+                                height: 24,
+                              ),
+                            ),
+                            Center(
+                              child: Image.asset(
+                                'assets/img/daun.png',
+                                width: 24,
+                                height: 24,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    // Content Rows
+                    if (detailedDailyData.isEmpty)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.only(top: 112.0),
+                          child: Text(
+                            'Belum ada data.',
+                            style: TextStyle(fontSize: 14),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      )
+                    else
+                      Table(
+                        columnWidths: const {
+                          0: FlexColumnWidth(3),
+                          1: FlexColumnWidth(2),
+                          2: FlexColumnWidth(2),
+                        },
+                        border: null,
+                        children: [
+                          ...detailedDailyData.entries.expand((entry) {
+                            final date = entry.key;
+                            final formattedDate = formatDate(date);
+                            final vehicles = entry.value;
+
+                            // Generate rows for each date and its vehicles
+                            return [
+                              // Date Row
+                              TableRow(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 8.0),
+                                    child: Text(
+                                      formattedDate,
+                                      style: const TextStyle(
+                                        fontFamily: 'Poppins',
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(),
+                                  const SizedBox(),
+                                ],
+                              ),
+                              // Vehicle Rows
+                              ...vehicles.map((vehicle) {
+                                final vehicleName = vehicle['vehicleName'];
+                                final vehicleType = vehicle['vehicleType'];
+                                final carbonEmission =
+                                    vehicle['carbonEmission'] ?? 0.0;
+                                final distance = vehicle['distance'] ?? 0.0;
+
+                                String iconPath;
+                                if (vehicleType == 'motor') {
+                                  iconPath =
+                                      'assets/img/motor.png'; // Ikon motor
+                                } else if (vehicleType == 'mobil') {
+                                  iconPath =
+                                      'assets/img/mobil.png'; // Ikon mobil
+                                } else {
+                                  iconPath = ''; // Default jika tidak ditemukan
+                                }
+
+                                return TableRow(
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 8.0),
+                                      child: Row(
+                                        crossAxisAlignment: CrossAxisAlignment
+                                            .center, // Menyelaraskan nama kendaraan dan ikon secara vertikal
+                                        children: [
+                                          if (iconPath
+                                              .isNotEmpty) // Cek apakah ada ikon
+                                            Image.asset(
+                                              iconPath,
+                                              width: 18,
+                                              height: 18,
+                                            ),
+                                          SizedBox(
+                                              width:
+                                                  8), // Memberikan jarak antara ikon dan teks
+                                          Text(
+                                            vehicleName,
+                                            style: const TextStyle(
+                                              fontFamily: 'Poppins',
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    // Pastikan angka jarak dan emisi terpusat secara vertikal
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 8.0),
+                                      child: Center(
+                                        child: Text(
+                                          '${distance.toStringAsFixed(1)} km',
+                                          style: const TextStyle(
+                                            fontFamily: 'Poppins',
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 8.0),
+                                      child: Center(
+                                        child: Text(
+                                          '${(carbonEmission / 1000).toStringAsFixed(1)} kg',
+                                          style: const TextStyle(
+                                            fontFamily: 'Poppins',
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              }).toList(),
+                            ];
+                          }),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     AuthMiddleware.checkAuthentication(context); // Middleware auth
+    // Ambil data terakhir (jika ada)
+    final lastDate =
+        detailedDailyData.keys.isNotEmpty ? detailedDailyData.keys.last : null;
+    final lastData = lastDate != null ? detailedDailyData[lastDate] : [];
 
     return Scaffold(
       backgroundColor: const Color(0xFFEFFFF8),
@@ -774,105 +1098,188 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   const SizedBox(height: 32),
-                  Container(
-                    width: MediaQuery.of(context).size.width * 0.85,
-                    height: 186,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20.0),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 8.0,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: SingleChildScrollView(
-                      child: Padding(
-                        padding: const EdgeInsets.all(
-                            16.0), // Padding untuk seluruh konten
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // Header row for first and second columns
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Hari ini',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const Spacer(),
-                                Image.asset(
-                                  'assets/img/pin_fill.png',
-                                  width: 24,
-                                  height: 24,
-                                ),
-                                const SizedBox(width: 52),
-                                Image.asset(
-                                  'assets/img/daun.png',
-                                  width: 24,
-                                  height: 24,
-                                ),
-                              ],
+                  GestureDetector(
+                    onTap: () => _showDetailedDataPopup(context),
+                    child: Center(
+                      child: Container(
+                        width: MediaQuery.of(context).size.width * 0.85,
+                        height: 186,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8.0,
+                              offset: const Offset(0, 4),
                             ),
-                            const SizedBox(height: 16),
-
-                            if (vehiclesReport.isEmpty)
-                              const Center(
-                                child: Padding(
-                                  padding: EdgeInsets.only(top: 112.0),
-                                  child: Text(
-                                    'Belum ada data.',
-                                    style: TextStyle(fontSize: 16),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              )
-                            else ...[
-                              // Loop through vehicles to display dynamic data
-                              for (var vehicle in vehiclesReport) ...[
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
+                          ],
+                        ),
+                        child: SingleChildScrollView(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                // Header Row
+                                Table(
+                                  columnWidths: const {
+                                    0: FlexColumnWidth(3),
+                                    1: FlexColumnWidth(2),
+                                    2: FlexColumnWidth(2),
+                                  },
+                                  border: null,
                                   children: [
-                                    Image.asset(
-                                      vehicle.vehicleType == 'Motor'
-                                          ? 'assets/img/MotorbikeIconFill.png'
-                                          : 'assets/img/CarIconFill.png',
-                                      width: 24,
-                                      height: 24,
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Text(
-                                      vehicle.vehicleName,
-                                      style: const TextStyle(
-                                          fontFamily: 'Poppins', fontSize: 16),
-                                    ),
-                                    const Spacer(),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      '${vehicle.vehicleTravel}km',
-                                      style: const TextStyle(
-                                          fontFamily: 'Poppins', fontSize: 16),
-                                    ),
-                                    const SizedBox(width: 42),
-                                    Text(
-                                      '${vehicle.vehicleEmission}kg',
-                                      style: const TextStyle(
-                                          fontFamily: 'Poppins', fontSize: 16),
+                                    TableRow(
+                                      children: [
+                                        const Padding(
+                                          padding: EdgeInsets.symmetric(
+                                              vertical: 2.0),
+                                          child: Text(
+                                            "Hari ini",
+                                            style: TextStyle(
+                                              fontFamily: 'Poppins',
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        Center(
+                                          child: Image.asset(
+                                            'assets/img/pin_fill.png',
+                                            width: 24,
+                                            height: 24,
+                                          ),
+                                        ),
+                                        Center(
+                                          child: Image.asset(
+                                            'assets/img/daun.png',
+                                            width: 24,
+                                            height: 24,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 8),
+                                // Content Rows
+                                Builder(
+                                  builder: (context) {
+                                    final today = DateTime.now();
+                                    final todayKey =
+                                        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+
+                                    if (detailedDailyData
+                                        .containsKey(todayKey)) {
+                                      final vehicles =
+                                          detailedDailyData[todayKey] ?? [];
+
+                                      return Table(
+                                        columnWidths: const {
+                                          0: FlexColumnWidth(3),
+                                          1: FlexColumnWidth(2),
+                                          2: FlexColumnWidth(2),
+                                        },
+                                        border: null,
+                                        children: vehicles.map((vehicle) {
+                                          final vehicleName =
+                                              vehicle['vehicleName'];
+                                          final vehicleType =
+                                              vehicle['vehicleType'];
+                                          final carbonEmission =
+                                              vehicle['carbonEmission'] ?? 0.0;
+                                          final distance =
+                                              vehicle['distance'] ?? 0.0;
+
+                                          String iconPath;
+                                          if (vehicleType == 'motor') {
+                                            iconPath = 'assets/img/motor.png';
+                                          } else if (vehicleType == 'mobil') {
+                                            iconPath = 'assets/img/mobil.png';
+                                          } else {
+                                            iconPath = '';
+                                          }
+
+                                          return TableRow(
+                                            children: [
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 8.0),
+                                                child: Row(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.center,
+                                                  children: [
+                                                    if (iconPath.isNotEmpty)
+                                                      Image.asset(
+                                                        iconPath,
+                                                        width: 18,
+                                                        height: 18,
+                                                      ),
+                                                    const SizedBox(width: 8),
+                                                    Text(
+                                                      vehicleName,
+                                                      style: const TextStyle(
+                                                        fontFamily: 'Poppins',
+                                                        fontSize: 14,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 8.0),
+                                                child: Center(
+                                                  child: Text(
+                                                    '${distance.toStringAsFixed(1)} km',
+                                                    style: const TextStyle(
+                                                      fontFamily: 'Poppins',
+                                                      fontSize: 14,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 8.0),
+                                                child: Center(
+                                                  child: Text(
+                                                    '${(carbonEmission / 1000).toStringAsFixed(1)} kg',
+                                                    style: const TextStyle(
+                                                      fontFamily: 'Poppins',
+                                                      fontSize: 14,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          );
+                                        }).toList(),
+                                      );
+                                    } else {
+                                      return const Center(
+                                        child: Padding(
+                                          padding: EdgeInsets.only(top: 16.0),
+                                          child: Text(
+                                            'Tidak ada data.',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontFamily: 'Poppins',
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                ),
                               ],
-                              const SizedBox(height: 16),
-                              const SizedBox(height: 8),
-                            ],
-                          ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
