@@ -8,6 +8,8 @@ import 'view/profile_page.dart';
 import 'view/education_page.dart';
 import 'firebase_options.dart';
 import 'view/tracking_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:introduction_screen/introduction_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,9 +19,23 @@ void main() async {
 
   User? user = FirebaseAuth.instance.currentUser;
 
+  // Mengecek apakah onboarding sudah ditampilkan sebelumnya
+  bool isFirstLaunch = await _isFirstLaunch();
+
   runApp(MyApp(
-    initialRoute: user == null ? '/auth' : '/home',
+    initialRoute: isFirstLaunch ? '/onboarding' : (user == null ? '/auth' : '/home'),
   ));
+}
+
+Future<bool> _isFirstLaunch() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  bool? isFirstLaunch = prefs.getBool('isFirstLaunch');
+  
+  if (isFirstLaunch == null || isFirstLaunch == true) {
+    prefs.setBool('isFirstLaunch', false);
+    return true;
+  }
+  return false;
 }
 
 class MyApp extends StatelessWidget {
@@ -99,12 +115,143 @@ class MyApp extends StatelessWidget {
         '/profile': (context) {
           final User? user =
               ModalRoute.of(context)?.settings.arguments as User?;
-          return ProfilePage(user: user!); // Ensure `user` is not null
+          return ProfilePage(user: user!);
         },
         '/education': (context) => EducationPage(),
         '/calculator': (context) => CalculatorPage(),
         '/tracking': (context) => TrackingPage(),
+        '/onboarding': (context) => OnboardingScreen(),
       },
+    );
+  }
+}
+
+class OnboardingScreen extends StatefulWidget {
+  @override
+  _OnboardingScreenState createState() => _OnboardingScreenState();
+}
+
+class _OnboardingScreenState extends State<OnboardingScreen> {
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: (index) {
+          setState(() {
+            _currentPage = index;
+          });
+        },
+        children: [
+          _buildPage(
+            'assets/img/selamat_datang.png',
+            'Selamat Datang!',
+            'KarbonKU adalah aplikasi karya anak bangsa yang ditujukan untuk membantu mengurangi emisi karbon di Indonesia melalui penerapan pajak karbon.',
+          ),
+          _buildPage(
+            'assets/img/mobilcarbontrack.png',
+            'Carbon Emission Tracking',
+            'Pantau karbon yang dihasilkan kendaraan kamu secara akurat berdasarkan jenis dan kondisinya!',
+          ),
+          _buildPage(
+            'assets/img/taxcarboncalculator.png',
+            'Tax Carbon Calculator',
+            'Hitung perkiraan biaya pajak karbon yang harus dibayarkan berdasarkan emisi yang telah dihasilkan!',
+          ),
+          _buildPage(
+            'assets/img/educationcorner.png',
+            'Education Corner',
+            'Dapatkan informasi terbaru seputar pajak karbon dan kondisi emisi karbon di Indonesia maupun global!',
+          ),
+        ],
+      ),
+      bottomSheet: _buildBottomNavigation(),
+    );
+  }
+
+  Widget _buildPage(String imagePath, String title, String body) {
+  return Container(
+    color: const Color(0xFFEFFFF8), 
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Align(
+          alignment: Alignment.center, 
+          child: Image.asset(
+            imagePath,
+            height: 200,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Padding(
+          padding: const EdgeInsets.only(left: 8),
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.left, 
+          ),
+        ),
+        const SizedBox(height: 10),
+        Padding(
+          padding: const EdgeInsets.only(left: 8), 
+          child: Text(
+            body,
+            textAlign: TextAlign.justify,
+            style: TextStyle(fontSize: 16),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+
+  Widget _buildBottomNavigation() {
+    return Container(
+      color: const Color(0xFFEFFFF8),
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          if (_currentPage > 0)
+            TextButton(
+              onPressed: () {
+                _pageController.previousPage(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.ease,
+                );
+              },
+              child: const Text('Back'),
+            ),
+          _currentPage < 3
+              ? TextButton(
+                  onPressed: () {
+                    _pageController.nextPage(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.ease,
+                    );
+                  },
+                  child: const Text('Next'),
+                )
+              : ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => HomePage()),
+                    );
+                  },
+                  child: const Text('Get Started'),
+                ),
+        ],
+      ),
     );
   }
 }
