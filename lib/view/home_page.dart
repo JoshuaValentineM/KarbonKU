@@ -926,14 +926,12 @@ class _HomePageState extends State<HomePage> {
                               TableRow(
                                 children: [
                                   Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 8.0),
+                                    padding: const EdgeInsets.only(left: 8.0).add(EdgeInsets.symmetric(vertical: 8.0)),
                                     child: Text(
                                       formattedDate,
                                       style: const TextStyle(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
                                   ),
@@ -963,8 +961,7 @@ class _HomePageState extends State<HomePage> {
                                 return TableRow(
                                   children: [
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 8.0),
+                                      padding: const EdgeInsets.only(left: 8.0).add(EdgeInsets.symmetric(vertical: 8.0)),
                                       child: Row(
                                         crossAxisAlignment: CrossAxisAlignment
                                             .center, // Menyelaraskan nama kendaraan dan ikon secara vertikal
@@ -982,8 +979,7 @@ class _HomePageState extends State<HomePage> {
                                           Text(
                                             vehicleName,
                                             style: const TextStyle(
-                                              fontFamily: 'Poppins',
-                                              fontSize: 14,
+                                              fontFamily: 'Poppins', fontSize: 16
                                             ),
                                           ),
                                         ],
@@ -1132,14 +1128,13 @@ class _HomePageState extends State<HomePage> {
                                   children: [
                                     TableRow(
                                       children: [
-                                        const Padding(
-                                          padding: EdgeInsets.symmetric(
-                                              vertical: 2.0),
+                                        Padding(
+                                          padding: EdgeInsets.only(left: 8.0).add(EdgeInsets.symmetric(vertical: 2.0)),
                                           child: Text(
                                             "Hari ini",
                                             style: TextStyle(
                                               fontFamily: 'Poppins',
-                                              fontSize: 14,
+                                              fontSize: 16,
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
@@ -1205,8 +1200,7 @@ class _HomePageState extends State<HomePage> {
                                             children: [
                                               Padding(
                                                 padding:
-                                                    const EdgeInsets.symmetric(
-                                                        vertical: 8.0),
+                                                    const EdgeInsets.only(left: 8.0).add(EdgeInsets.symmetric(vertical: 8.0)),
                                                 child: Row(
                                                   crossAxisAlignment:
                                                       CrossAxisAlignment.center,
@@ -1222,7 +1216,7 @@ class _HomePageState extends State<HomePage> {
                                                       vehicleName,
                                                       style: const TextStyle(
                                                         fontFamily: 'Poppins',
-                                                        fontSize: 14,
+                                                        fontSize: 16,
                                                       ),
                                                     ),
                                                   ],
@@ -1405,7 +1399,7 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                 ),
                                 padding:
-                                    EdgeInsets.all(16), // Padding untuk teks
+                                    EdgeInsets.only(left: 18.0, right: 8.0, top: 4.0, bottom: 4.0), // Padding untuk teks
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
