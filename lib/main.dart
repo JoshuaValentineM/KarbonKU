@@ -32,7 +32,7 @@ Future<bool> _isFirstLaunch() async {
   bool? isFirstLaunch = prefs.getBool('isFirstLaunch');
   
   if (isFirstLaunch == null || isFirstLaunch == true) {
-    prefs.setBool('isFirstLaunch', false); // Set ke false setelah pertama kali dibuka
+    prefs.setBool('isFirstLaunch', false);
     return true;
   }
   return false;
@@ -115,7 +115,7 @@ class MyApp extends StatelessWidget {
         '/profile': (context) {
           final User? user =
               ModalRoute.of(context)?.settings.arguments as User?;
-          return ProfilePage(user: user!); // Ensure `user` is not null
+          return ProfilePage(user: user!);
         },
         '/education': (context) => EducationPage(),
         '/calculator': (context) => CalculatorPage(),
@@ -174,37 +174,37 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildPage(String imagePath, String title, String body) {
   return Container(
-    color: const Color(0xFFEFFFF8), // Background page color
-    padding: const EdgeInsets.symmetric(horizontal: 16), // Menambahkan padding pada container
+    color: const Color(0xFFEFFFF8), 
+    padding: const EdgeInsets.symmetric(horizontal: 16),
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.start, // Menyelaraskan elemen ke kiri
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Align(
-          alignment: Alignment.center, // Menyelaraskan gambar di tengah
+          alignment: Alignment.center, 
           child: Image.asset(
             imagePath,
-            height: 200, // Sesuaikan dengan ukuran gambar yang diinginkan
+            height: 200,
           ),
         ),
         const SizedBox(height: 20),
         Padding(
-          padding: const EdgeInsets.only(left: 8), // Padding untuk menggeser title ke kiri
+          padding: const EdgeInsets.only(left: 8),
           child: Text(
             title,
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
-            textAlign: TextAlign.left, // Rata kiri
+            textAlign: TextAlign.left, 
           ),
         ),
         const SizedBox(height: 10),
         Padding(
-          padding: const EdgeInsets.only(left: 8), // Padding yang sama untuk body
+          padding: const EdgeInsets.only(left: 8), 
           child: Text(
             body,
-            textAlign: TextAlign.justify, // Rata kiri-kanan
+            textAlign: TextAlign.justify,
             style: TextStyle(fontSize: 16),
           ),
         ),
@@ -216,7 +216,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildBottomNavigation() {
     return Container(
-      color: const Color(0xFFEFFFF8), // Menyamakan warna dengan latar belakang halaman
+      color: const Color(0xFFEFFFF8),
       padding: const EdgeInsets.all(16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -243,7 +243,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 )
               : ElevatedButton(
                   onPressed: () {
-                    // Navigasi ke halaman utama setelah onboarding selesai
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(builder: (context) => HomePage()),
