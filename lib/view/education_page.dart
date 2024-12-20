@@ -111,7 +111,7 @@ class EducationPage extends StatelessWidget {
                   const SizedBox(height: 10),
                   _buildHorizontalArticleScroll(articleData),
 
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 10),
 
                   // Section 3: Infographics
                   const Text(
@@ -147,7 +147,7 @@ class EducationPage extends StatelessWidget {
           final videoUrl = video['url'];
 
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            padding: const EdgeInsets.only(right: 16.0),
             child: GestureDetector(
               onTap: () async {
                 Uri videoUri = Uri.parse(videoUrl);
@@ -207,7 +207,7 @@ class EducationPage extends StatelessWidget {
           final columnArticles = articles.sublist(startIndex, endIndex);
 
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            padding: const EdgeInsets.only(right: 16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: columnArticles.map((article) {
@@ -308,7 +308,7 @@ class EducationPage extends StatelessWidget {
               infographicThumbnails[index]; // Directly use the path
 
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            padding: const EdgeInsets.only(right: 16.0),
             child: GestureDetector(
               onTap: () {
                 // Tampilkan gambar lebih besar dalam popup
