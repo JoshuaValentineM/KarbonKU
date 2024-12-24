@@ -26,34 +26,37 @@ class _HomePageState extends State<HomePage> {
     fetchVehicleReport();
   }
 
-  String formatDate(String date) {
-    DateTime parsedDate =
-        DateTime.parse(date); // Mengubah string menjadi DateTime
-    return DateFormat('dd MMM, yyyy')
-        .format(parsedDate); // Format ke "17 Nov, 2024"
+  String formatDate(DateTime date) {
+    final today = DateTime.now();
+    if (date.year == today.year && date.month == today.month && date.day == today.day) {
+      return 'Hari ini';
+    }
+    return DateFormat('dd MMM, yyyy').format(date);
   }
 
-  int _selectedIndex = 2; // Default selected tab is Home
+
+
+  int _selectedIndex = 2; 
   User? user;
   bool isLoading = false;
 
   final PageController _pageController = PageController();
-  double carbonReportPercentageDaily = 0.0; // Ganti dengan nilai yang sesuai
-  double carbonReportPercentageWeekly = 0.0; // Ganti dengan nilai yang sesuai
-  double carbonReportPercentageMonthly = 0.0; // Ganti dengan nilai yang sesuai
-  double carbonReportPercentageYearly = 0.0; // Ganti dengan nilai yang sesuai
+  double carbonReportPercentageDaily = 0.0; 
+  double carbonReportPercentageWeekly = 0.0; 
+  double carbonReportPercentageMonthly = 0.0; 
+  double carbonReportPercentageYearly = 0.0; 
   double maximumCarbonDaily = 5048;
   double maximumCarbonWeekly = 38460;
   double maximumCarbonMonthly = 166670;
   double maximumCarbonYearly = 200000;
 
-  double totalCarbonEmittedDaily = 0.0; // Ganti dengan nilai yang sesuai
-  double totalDistanceTraveledDaily = 0.0; // Ganti dengan nilai yang sesuai
-  double totalCarbonEmittedWeekly = 0.0; // Ganti dengan nilai yang sesuai
+  double totalCarbonEmittedDaily = 0.0; 
+  double totalDistanceTraveledDaily = 0.0; 
+  double totalCarbonEmittedWeekly = 0.0; 
   double totalDistanceTraveledWeekly = 0.0;
-  double totalCarbonEmittedMonthly = 0.0; // Ganti dengan nilai yang sesuai
+  double totalCarbonEmittedMonthly = 0.0; 
   double totalDistanceTraveledMonthly = 0.0;
-  double totalCarbonEmittedYearly = 0.0; // Ganti dengan nilai yang sesuai
+  double totalCarbonEmittedYearly = 0.0; 
   double totalDistanceTraveledYearly = 0.0;
 
   List<Map<String, dynamic>> vehicles = [];
@@ -250,7 +253,7 @@ class _HomePageState extends State<HomePage> {
 
     // Mengurutkan data berdasarkan tanggal (dateKey)
     var sortedKeys = tempDetailedDailyData.keys.toList()
-      ..sort((a, b) => DateTime.parse(a).compareTo(DateTime.parse(b)));
+      ..sort((a, b) => DateTime.parse(b).compareTo(DateTime.parse(a)));
 
     // Menyusun data yang sudah diurutkan
     Map<String, List<Map<String, dynamic>>> sortedData = {};
@@ -865,13 +868,13 @@ class _HomePageState extends State<HomePage> {
                           children: [
                             Padding(
                               padding:
-                                  const EdgeInsets.symmetric(vertical: 2.0),
+                                  const EdgeInsets.only(left: 8.0).add(EdgeInsets.symmetric(vertical: 2.0)),
                               child: Text(
-                                "",
+                                "Detail",
                                 style: const TextStyle(
                                   fontFamily: 'Poppins',
-                                  fontSize: 8,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ),
@@ -894,7 +897,7 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                     const SizedBox(height: 4),
-                    // Content Rows
+                    
                     if (detailedDailyData.isEmpty)
                       const Center(
                         child: Padding(
@@ -916,11 +919,10 @@ class _HomePageState extends State<HomePage> {
                         border: null,
                         children: [
                           ...detailedDailyData.entries.expand((entry) {
-                            final date = entry.key;
+                            final date = DateTime.parse(entry.key); // Ubah key menjadi DateTime
                             final formattedDate = formatDate(date);
                             final vehicles = entry.value;
 
-                            // Generate rows for each date and its vehicles
                             return [
                               // Date Row
                               TableRow(
@@ -943,19 +945,16 @@ class _HomePageState extends State<HomePage> {
                               ...vehicles.map((vehicle) {
                                 final vehicleName = vehicle['vehicleName'];
                                 final vehicleType = vehicle['vehicleType'];
-                                final carbonEmission =
-                                    vehicle['carbonEmission'] ?? 0.0;
+                                final carbonEmission = vehicle['carbonEmission'] ?? 0.0;
                                 final distance = vehicle['distance'] ?? 0.0;
 
                                 String iconPath;
                                 if (vehicleType == 'motor') {
-                                  iconPath =
-                                      'assets/img/motor.png'; // Ikon motor
+                                  iconPath = 'assets/img/motor.png';
                                 } else if (vehicleType == 'mobil') {
-                                  iconPath =
-                                      'assets/img/mobil.png'; // Ikon mobil
+                                  iconPath = 'assets/img/mobil.png';
                                 } else {
-                                  iconPath = ''; // Default jika tidak ditemukan
+                                  iconPath = '';
                                 }
 
                                 return TableRow(
@@ -963,32 +962,27 @@ class _HomePageState extends State<HomePage> {
                                     Padding(
                                       padding: const EdgeInsets.only(left: 8.0).add(EdgeInsets.symmetric(vertical: 8.0)),
                                       child: Row(
-                                        crossAxisAlignment: CrossAxisAlignment
-                                            .center, // Menyelaraskan nama kendaraan dan ikon secara vertikal
+                                        crossAxisAlignment: CrossAxisAlignment.center,
                                         children: [
-                                          if (iconPath
-                                              .isNotEmpty) // Cek apakah ada ikon
+                                          if (iconPath.isNotEmpty)
                                             Image.asset(
                                               iconPath,
                                               width: 18,
                                               height: 18,
                                             ),
-                                          SizedBox(
-                                              width:
-                                                  8), // Memberikan jarak antara ikon dan teks
+                                          const SizedBox(width: 8),
                                           Text(
                                             vehicleName,
                                             style: const TextStyle(
-                                              fontFamily: 'Poppins', fontSize: 16
+                                              fontFamily: 'Poppins',
+                                              fontSize: 16,
                                             ),
                                           ),
                                         ],
                                       ),
                                     ),
-                                    // Pastikan angka jarak dan emisi terpusat secara vertikal
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 8.0),
+                                      padding: const EdgeInsets.symmetric(vertical: 8.0),
                                       child: Center(
                                         child: Text(
                                           '${distance.toStringAsFixed(1)} km',
@@ -1000,8 +994,7 @@ class _HomePageState extends State<HomePage> {
                                       ),
                                     ),
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 8.0),
+                                      padding: const EdgeInsets.symmetric(vertical: 8.0),
                                       child: Center(
                                         child: Text(
                                           '${(carbonEmission / 1000).toStringAsFixed(1)} kg',
@@ -1399,7 +1392,7 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                 ),
                                 padding:
-                                    EdgeInsets.only(left: 18.0, right: 8.0, top: 4.0, bottom: 4.0), // Padding untuk teks
+                                    EdgeInsets.only(left: 18.0, right: 8.0, top: 2.0, bottom: 2.0), // Padding untuk teks
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -1409,7 +1402,7 @@ class _HomePageState extends State<HomePage> {
                                         color: Colors.white,
                                         fontSize: 28, // Perbesar ukuran font
                                         fontWeight: FontWeight
-                                            .w600, // Set ketebalan font sama
+                                            .w500, // Set ketebalan font sama
                                       ),
                                     ),
                                     SizedBox(height: 4), // Spasi antara teks
@@ -1421,7 +1414,7 @@ class _HomePageState extends State<HomePage> {
                                             color: Colors.white,
                                             fontSize: 28, // Samakan ukuran font
                                             fontWeight: FontWeight
-                                                .w600, // Samakan ketebalan
+                                                .w500, // Samakan ketebalan
                                           ),
                                         ),
                                         SizedBox(

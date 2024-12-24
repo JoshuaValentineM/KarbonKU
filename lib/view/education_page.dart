@@ -96,7 +96,7 @@ class EducationPage extends StatelessWidget {
                   // Section 1: Informative Videos
                   const Text(
                     'Video Rekomendasi',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 10),
                   _buildHorizontalVideoScroll(videoData),
@@ -106,7 +106,7 @@ class EducationPage extends StatelessWidget {
                   // Section 2: Articles
                   const Text(
                     'Artikel',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 10),
                   _buildHorizontalArticleScroll(articleData),
@@ -116,7 +116,7 @@ class EducationPage extends StatelessWidget {
                   // Section 3: Infographics
                   const Text(
                     'Infografis',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 10),
                   _buildHorizontalInfographicScroll(infographicData),
