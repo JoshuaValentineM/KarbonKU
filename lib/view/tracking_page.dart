@@ -557,7 +557,7 @@ class _TrackingPageState extends State<TrackingPage> {
         backgroundColor: const Color(0xFF3B645E),
         elevation: 0,
         title: const Text(
-          'Tracking',
+          'Track',
           style: TextStyle(color: Colors.white),
         ),
       ),

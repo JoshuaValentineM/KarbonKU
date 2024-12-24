@@ -69,7 +69,7 @@ class CustomBottomNavBar extends StatelessWidget {
             width: 24,
             height: 24,
           ),
-          label: 'Tracking',
+          label: 'Track',
         ),
         BottomNavigationBarItem(
           icon: Image.asset(
