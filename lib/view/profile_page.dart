@@ -134,19 +134,18 @@ class _ProfilePageState extends State<ProfilePage> {
               style: TextStyle(color: Colors.white),
             ),
           ),
-          body: !isLoading 
-          ? Stack(
-              children: [
-                SingleChildScrollView(
+          body: !isLoading
+            ? Align(
+                alignment: Alignment.center, // Align horizontally and vertically to the center
+                child: SingleChildScrollView(
                   child: Column(
                     children: [
-                      const SizedBox(height: 40),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 20.0),
                         child: Column(
                           children: [
                             _buildProfileBox(
-                                context, user, location, profilePicture, displayName),
+                              context, user, location, profilePicture, displayName),
                             const SizedBox(height: 20),
                             _buildVehicleBox(context),
                             const SizedBox(height: 20),
@@ -174,9 +173,8 @@ class _ProfilePageState extends State<ProfilePage> {
                     ],
                   ),
                 ),
-              ],
-            ) 
-          : const Center(
+              )
+            : const Center(
                 child: CircularProgressIndicator(),
               ),
           bottomNavigationBar: CustomBottomNavBar(
@@ -219,7 +217,7 @@ class _ProfilePageState extends State<ProfilePage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
               Text(
                 displayName,
                 style: Theme.of(context)
@@ -231,10 +229,10 @@ class _ProfilePageState extends State<ProfilePage> {
               const SizedBox(height: 5),
               Text(
                 location,
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w400, fontSize: 14.0),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -251,11 +249,11 @@ class _ProfilePageState extends State<ProfilePage> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
-                            (_totalEmission/1000).toStringAsFixed(0),
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineSmall
-                                ?.copyWith(color: const Color(0xFF66D6A6)),
+                            (_totalEmission / 1000).toStringAsFixed(0),
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  color: const Color(0xFF66D6A6),
+                                  fontWeight: FontWeight.w500, // Set font weight to 600
+                                ),
                           ),
                           const Text(
                             'kg produced',
@@ -277,11 +275,11 @@ class _ProfilePageState extends State<ProfilePage> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
-                            (_totalDistance/1000).toStringAsFixed(0),
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineSmall
-                                ?.copyWith(color: const Color(0xFF66D6A6)),
+                            (_totalDistance / 1000).toStringAsFixed(0),
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  color: const Color(0xFF66D6A6),
+                                  fontWeight: FontWeight.w500, // Set font weight to 600
+                                ),
                           ),
                           const Text(
                             'km traveled',
@@ -374,12 +372,13 @@ class _ProfilePageState extends State<ProfilePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Padding(
-                  padding: EdgeInsets.only(top: 16.0),
+                  padding: EdgeInsets.only(top: 12.0),
                   child: Text(
                     "Kendaraan Terdaftar",
                     style: TextStyle(
                       color: Colors.black,
                       fontSize: 18,
+                      fontWeight: FontWeight.w500
                     ),
                   ),
                 ),
