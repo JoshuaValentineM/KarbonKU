@@ -971,13 +971,17 @@ class _HomePageState extends State<HomePage> {
                                               height: 18,
                                             ),
                                           const SizedBox(width: 8),
-                                          Text(
-                                            vehicleName,
-                                            style: const TextStyle(
-                                              fontFamily: 'Poppins',
-                                              fontSize: 16,
-                                            ),
-                                          ),
+                                          Flexible(
+                                                    child: Text(
+                                                      vehicleName,
+                                                      style: const TextStyle(
+                                                        fontFamily: 'Poppins',
+                                                        fontSize: 16,
+                                                      ),
+                                                      overflow: TextOverflow.ellipsis,
+                                                      maxLines: 1,
+                                                    ),
+                                          )
                                         ],
                                       ),
                                     ),
@@ -1205,13 +1209,17 @@ class _HomePageState extends State<HomePage> {
                                                         height: 18,
                                                       ),
                                                     const SizedBox(width: 8),
-                                                    Text(
+                                                    Flexible(
+                                                    child: Text(
                                                       vehicleName,
                                                       style: const TextStyle(
                                                         fontFamily: 'Poppins',
                                                         fontSize: 16,
                                                       ),
+                                                      overflow: TextOverflow.ellipsis,
+                                                      maxLines: 1,
                                                     ),
+                                                    )
                                                   ],
                                                 ),
                                               ),
