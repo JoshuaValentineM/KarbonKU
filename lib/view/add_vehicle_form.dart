@@ -55,7 +55,7 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
       _vehicleTypeError = _selectedVehicleType == null;
     });
 
-    if (_formKey.currentState?.validate() ?? false && !_vehicleTypeError) {
+    if ((_formKey.currentState?.validate() ?? false) && !_vehicleTypeError) {
       final vehicleType = _selectedVehicleType ?? '';
       final vehicleName = _vehicleNameController.text;
       final vehicleAge = _vehicleAge.toInt(); // Convert to int
