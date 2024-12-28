@@ -23,14 +23,15 @@ void main() async {
   bool isFirstLaunch = await _isFirstLaunch();
 
   runApp(MyApp(
-    initialRoute: isFirstLaunch ? '/onboarding' : (user == null ? '/auth' : '/home'),
+    initialRoute:
+        isFirstLaunch ? '/onboarding' : (user == null ? '/auth' : '/home'),
   ));
 }
 
 Future<bool> _isFirstLaunch() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   bool? isFirstLaunch = prefs.getBool('isFirstLaunch');
-  
+
   if (isFirstLaunch == null || isFirstLaunch == true) {
     prefs.setBool('isFirstLaunch', false);
     return true;
@@ -138,6 +139,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFEFFFF8),
       body: PageView(
         controller: _pageController,
         onPageChanged: (index) {
@@ -147,22 +149,34 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         },
         children: [
           _buildPage(
-            'assets/img/selamat_datang.png',
+            'assets/img/HeaderWelcome#1.png',
+            'assets/img/WelcomeIcon#1.png',
+            260,
+            353,
             'Selamat Datang!',
             'KarbonKU adalah aplikasi karya anak bangsa yang ditujukan untuk membantu mengurangi emisi karbon di Indonesia melalui penerapan pajak karbon.',
           ),
           _buildPage(
-            'assets/img/mobilcarbontrack.png',
+            'assets/img/HeaderWelcome#2.png',
+            'assets/img/WelcomeIcon#2.png',
+            172,
+            353,
             'Carbon Emission Tracking',
             'Pantau karbon yang dihasilkan kendaraan kamu secara akurat berdasarkan jenis dan kondisinya!',
           ),
           _buildPage(
-            'assets/img/taxcarboncalculator.png',
+            'assets/img/HeaderWelcome#3.png',
+            'assets/img/WelcomeIcon#3.png',
+            172,
+            353,
             'Tax Carbon Calculator',
             'Hitung perkiraan biaya pajak karbon yang harus dibayarkan berdasarkan emisi yang telah dihasilkan!',
           ),
           _buildPage(
-            'assets/img/educationcorner.png',
+            'assets/img/HeaderWelcome#4.png',
+            'assets/img/WelcomeIcon#4.png',
+            172,
+            353,
             'Education Corner',
             'Dapatkan informasi terbaru seputar pajak karbon dan kondisi emisi karbon di Indonesia maupun global!',
           ),
@@ -172,74 +186,123 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildPage(String imagePath, String title, String body) {
-  return Container(
-    color: const Color(0xFFEFFFF8), 
-    padding: const EdgeInsets.symmetric(horizontal: 16),
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildPage(String headerImagePath, String imagePath,
+      double imageHeight, double imageWidth, String title, String body) {
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Align(
-          alignment: Alignment.center, 
+        // Header image container
+        Container(
+          color: const Color(
+              0xFFEFFFF8), // Bisa disesuaikan jika ada warna background
+          child: Image.asset(
+            headerImagePath,
+            width: double.infinity, // Memenuhi lebar layar
+            fit: BoxFit.cover, // Menyesuaikan proporsi gambar
+          ),
+        ),
+        // ImagePath container
+        Container(
+          color: const Color(0xFFEFFFF8), // Warna latar belakang
+          alignment: Alignment.center, // Menempatkan gambar di tengah
+          padding: EdgeInsets.only(
+              left: 8, right: 8, top: _currentPage == 0 ? 20 : 100),
           child: Image.asset(
             imagePath,
-            height: 200,
+            height: imageHeight,
+            width: imageWidth,
+            fit: BoxFit.contain, // Sesuaikan agar gambar tetap proporsional
           ),
         ),
-        const SizedBox(height: 20),
-        Padding(
-          padding: const EdgeInsets.only(left: 8),
-          child: Text(
-            title,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.left, 
-          ),
-        ),
-        const SizedBox(height: 10),
-        Padding(
-          padding: const EdgeInsets.only(left: 8), 
-          child: Text(
-            body,
-            textAlign: TextAlign.justify,
-            style: TextStyle(fontSize: 16),
+        // Text container
+        const SizedBox(height: 40),
+        Container(
+          color: const Color(0xFFEFFFF8), // Warna latar belakang
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.left,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                body,
+                textAlign: TextAlign.justify,
+                style: const TextStyle(fontSize: 16),
+              ),
+            ],
           ),
         ),
       ],
-    ),
-  );
-}
-
+    );
+  }
 
   Widget _buildBottomNavigation() {
     return Container(
       color: const Color(0xFFEFFFF8),
       padding: const EdgeInsets.all(16),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment:
+            MainAxisAlignment.start, // Posisikan indikator di kiri
         children: [
-          if (_currentPage > 0)
+          // Menambahkan indikator halaman menggunakan gambar
+          Row(
+            children: List.generate(4, (index) {
+              String imagePath = (_currentPage == index)
+                  ? 'assets/img/LeafCurrentPage.png' // Gambar untuk halaman aktif
+                  : 'assets/img/LeafPage.png'; // Gambar untuk halaman lainnya
+              return Container(
+                margin:
+                    const EdgeInsets.only(right: 2), // Jarak antar indikator
+                child: Image.asset(
+                  imagePath,
+                  width: 23, // Sesuaikan ukuran gambar
+                  height: 35, // Sesuaikan ukuran gambar
+                ),
+              );
+            }),
+          ),
+          const Spacer(), // Memberikan ruang kosong di tengah agar tombol di sebelah kanan
+          if (_currentPage >= 0 && _currentPage != 3)
             TextButton(
               onPressed: () {
-                _pageController.previousPage(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.ease,
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => HomePage()),
                 );
               },
-              child: const Text('Back'),
+              child: const Text(
+                'LEWATI',
+                style: TextStyle(
+                  color: Color(0xFF757B7B),
+                ),
+              ),
             ),
+          const SizedBox(width: 10),
           _currentPage < 3
-              ? TextButton(
+              ? ElevatedButton(
                   onPressed: () {
                     _pageController.nextPage(
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.ease,
                     );
                   },
-                  child: const Text('Next'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        const Color(0xFF66D6A6), // Background color
+                  ),
+                  child: const Text(
+                    'LANJUT',
+                    style: TextStyle(
+                      color: Colors.white,
+                    ),
+                  ),
                 )
               : ElevatedButton(
                   onPressed: () {
@@ -248,7 +311,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       MaterialPageRoute(builder: (context) => HomePage()),
                     );
                   },
-                  child: const Text('Get Started'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        const Color(0xFF66D6A6), // Background color
+                  ),
+                  child: const Text(
+                    'SELESAI',
+                    style: TextStyle(
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
         ],
       ),
