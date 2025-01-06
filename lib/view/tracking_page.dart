@@ -282,7 +282,7 @@ class _TrackingPageState extends State<TrackingPage> {
           double emission;
           if (doc['vehicleType'] == 'motor') {
             iconPath = 'assets/img/motorcycle_icon.png';
-            emission = 0.153;
+            emission = 0.026;
           } else if (doc['vehicleType'] == 'mobil' && doc['fuelType'] == 'Diesel'){
             iconPath = 'assets/img/car_icon.png';
             emission = 0.265;
