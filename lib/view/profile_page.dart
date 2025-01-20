@@ -88,12 +88,70 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _signOut(BuildContext context) async {
-    try {
-      await FirebaseAuth.instance.signOut();
-      Navigator.pushReplacementNamed(context, '/auth');
-    } catch (e) {
-      print('Error logging out: $e');
-    }
+    await _showSignOutConfirmationDialog(context);
+  }
+
+  Future<void> _showSignOutConfirmationDialog(BuildContext context) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // Prevent closing the dialog by tapping outside
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16.0),
+            child: Text(
+              'Apakah Anda yakin ingin keluar?',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16),
+            ),
+          ),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      backgroundColor: const Color(0xFFE3E5E5),
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25.0),
+                      ),
+                    ),
+                    child: const Text('Batal'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ),
+                const SizedBox(width: 16.0),
+                Expanded(
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      backgroundColor: const Color(0xFFD66666),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25.0),
+                      ),
+                    ),
+                    child: const Text('Keluar'),
+                    onPressed: () {
+                      try {
+                        FirebaseAuth.instance.signOut();
+                        Navigator.pushReplacementNamed(context, '/auth');
+                      } catch (e) {
+                        print('Error logging out: $e');
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -144,6 +202,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         padding: const EdgeInsets.symmetric(vertical: 20.0),
                         child: Column(
                           children: [
+                            const SizedBox(height: 40),
                             _buildProfileBox(
                               context, user, location, profilePicture, displayName),
                             const SizedBox(height: 20),

@@ -194,8 +194,8 @@ class _ViewVehicleDetailFormState extends State<ViewVehicleDetailForm> {
                 Expanded(
                   child: TextButton(
                     style: TextButton.styleFrom(
-                      backgroundColor: const Color(0xFFE3E5E5),
-                      foregroundColor: Colors.black,
+                      backgroundColor: const Color(0xFFD66666),
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16.0),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(25.0),
