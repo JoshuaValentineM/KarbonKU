@@ -96,6 +96,10 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
     setState(() {
       _selectedVehicleType = vehicleType;
       _vehicleTypeError = false; // Clear error when user selects a vehicle
+
+      if (_selectedVehicleType == 'motor' && _fuelType == 'Diesel') {
+      _fuelType = 'Bensin'; // Set default yang valid
+    }
     });
   }
 
@@ -290,7 +294,8 @@ class _AddVehicleFormState extends State<AddVehicleForm> {
                     flex: 2,
                     child: DropdownButtonFormField<String>(
                       value: _fuelType,
-                      items: <String>['Bensin', 'Diesel'].map((String value) {
+                       items: (_selectedVehicleType == 'motor' ? ['Bensin'] : ['Bensin', 'Diesel'])
+            .map((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
                           child: Text(
